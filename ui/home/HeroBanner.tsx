@@ -90,7 +90,7 @@ const HeroBanner = () => {
         <Box display={{ base: 'flex', lg: 'none' }}>
           <SearchBarMobile isHeroBanner/>
         </Box>
-        <Box display={{ base: 'none', lg: 'flex' }}>
+        <Box display={{ base: 'none', lg: 'flex' }} >
           <SearchBar isHeroBanner/>
         </Box>
       </Box>

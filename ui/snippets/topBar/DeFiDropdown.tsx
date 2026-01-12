@@ -49,7 +49,7 @@ const DeFiDropdown = () => {
     <PopoverRoot>
       <PopoverTrigger>
         <Button
-          size="md"
+          size="sm"
           gap={0}
           fontWeight="500"
           color="black"
@@ -94,7 +94,7 @@ const DeFiDropdown = () => {
       target={items[0].dappId ? "_self" : "_blank"}
       asChild
     >
-      <Button onClick={items[0].onClick} size="2xs">
+      <Button onClick={items[0].onClick} size="sm">
         {items[0].icon && (
           <IconSvg name={items[0].icon} boxSize={3} mr={{ base: 0, sm: 1 }} />
         )}

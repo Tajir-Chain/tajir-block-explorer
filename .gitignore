@@ -65,3 +65,9 @@ yarn-error.log*
 # build outputs
 /tools/preset-sync/index.js
 /toolkit/package/dist
+
+#Zone identfier
+*Zone.Identifier
+*.ts*:Zone.Identifier
+*.js*:Zone.Identifier
+*.tsx*:Zone.Identifier

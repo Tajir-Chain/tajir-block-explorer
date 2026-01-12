@@ -26,7 +26,7 @@ const NetworkAddToWallet = ({ source, onAddSuccess }: Props) => {
   return (
     <Button
       variant="outline"
-      size="md"
+      size="sm"
       borderWidth="1px"
       fontWeight="500"
       color="yellow.400"

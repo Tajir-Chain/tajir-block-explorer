@@ -133,18 +133,33 @@ const Footer = () => {
           Tajir is a tool for inspecting and analyzing EVM based blockchains. Blockchain explorer for Tajir Networks.
         </Text>
         <Box mt={ 6 } alignItems="start" textStyle="xs">
-          { apiVersionUrl && (
-            <Text>
-              Backend: <Link href={ apiVersionUrl } external noIcon>{ backendVersionData?.backend_version }</Link>
-            </Text>
-          ) }
-          { frontendLink && (
-            <Text>
-              Frontend: { frontendLink }
-            </Text>
-          ) }
+ { apiVersionUrl && (
+    <Text>
+      Backend:{' '}
+      <Text
+        as="span"
+        color={{ base: 'green.600', _dark: 'green.300' }}
+        fontWeight="500"
+      >
+        v9.3.2
+      </Text>
+    </Text>
+  ) }
+
+  { frontendLink && (
+    <Text>
+      Frontend:{' '}
+      <Text
+        as="span"
+        color={{ base: 'green.600', _dark: 'green.300' }}
+        fontWeight="500"
+      >
+        v2.5.3
+      </Text>
+    </Text>
+  ) }
           <Text>
-            Copyright { copy }  Tajir Limited 2026{ (new Date()).getFullYear() }
+            Copyright { copy }  Tajir Limited { (new Date()).getFullYear() }
           </Text>
         </Box>
       </Box>
