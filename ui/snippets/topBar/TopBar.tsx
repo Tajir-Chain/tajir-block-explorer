@@ -39,7 +39,10 @@ const TopBar = () => {
 
   return (
     // not ideal if scrollbar is visible, but better than having a horizontal scroll
-    <Box bgColor={{ _light: 'theme.topbar.bg._light', _dark: 'theme.topbar.bg._dark' }} position="sticky" left={ 0 } width="100%" maxWidth="100vw">
+    <Box bgColor={{ _light: 'theme.topbar.bg._light', _dark: 'theme.topbar.bg._dark' }} position="sticky" left={ 0 } width="100%" maxWidth="100vw"
+       borderBottomWidth="1px"          
+      borderColor="border.divider" 
+      >
       <Flex
         py={ 3 }
         px={{ base: 3, lg: 6 }}

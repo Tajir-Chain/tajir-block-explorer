@@ -32,6 +32,7 @@ const LatestBlocksItem = ({ block, isLoading, animation }: Props) => {
       border="1px solid"
       borderColor="border.divider"
       p={ 3 }
+      bg={{  _light: 'theme.stats.bg._light', _dark: 'theme.stats.bg._dark'}} 
     >
       <Flex alignItems="center" overflow="hidden" w="100%" mb={ 3 }>
         <BlockEntity

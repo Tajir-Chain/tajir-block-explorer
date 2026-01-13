@@ -502,7 +502,7 @@ const semanticTokens: ThemingConfig['semanticTokens'] = {
   },
   shadows: {
     popover: {
-      DEFAULT: { value: { _light: '{shadows.size.2xl}', _dark: '{shadows.dark-lg}' } },
+      DEFAULT: { value: { _light: '{colors.whiteAlpha.900}', _dark: '{shadows.dark-lg}' } },
     },
     drawer: {
       DEFAULT: { value: { _light: '{shadows.size.lg}', _dark: '{shadows.dark-lg}' } },

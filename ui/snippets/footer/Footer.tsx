@@ -170,6 +170,7 @@ const Footer = () => {
     as: 'footer',
     borderTopWidth: '1px',
     borderTopColor: 'border.divider',
+    bg: { base: 'whiteAlpha.900', _dark: 'blackAlpha.900' },
   };
 
   const contentProps: GridProps = {
@@ -219,7 +220,7 @@ const Footer = () => {
           >
             {
               ([
-                { title: 'Blockscout', links: BLOCKSCOUT_LINKS },
+                { title: 'Tajir', links: BLOCKSCOUT_LINKS },
                 ...(linksData || []),
               ])
                 .slice(0, colNum)

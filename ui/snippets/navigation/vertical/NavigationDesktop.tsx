@@ -51,6 +51,7 @@ const NavigationDesktop = () => {
   return (
     <Flex
       display={{ base: 'none', lg: 'flex' }}
+      bgColor= {{ base: 'whiteAlpha.900', _dark: 'blackAlpha.900' }}
       className="group"
       position="relative"
       flexDirection="column"
