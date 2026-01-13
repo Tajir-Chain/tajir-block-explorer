@@ -82,12 +82,10 @@ const NavLinkGroup = ({ item, isCollapsed }: Props) => {
           placement: "right-start",
           offset: { crossAxis: 0, mainAxis: 8 },
         }}
-        // should not be lazy to help google indexing pages
         lazyMount={false}
         variant="popover"
         interactive
         contentProps={{
-          bg: { base: "#ffffff", _dark: "#101112"},
           boxShadow: { base: "xl", _dark: "dark-lg"},
         }}
       >
