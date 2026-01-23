@@ -22,7 +22,7 @@ export const REST_API_SECTIONS = [
   feature.isEnabled && {
     id: 'blockscout-core-api',
     // title: 'Blockscout core API',
-    title: 'Tajir core API',
+    title: 'Tajir Explorer API',
     swagger: {
       url: feature.coreApiSwaggerUrl,
       requestInterceptor: (req: SwaggerRequest) => {
