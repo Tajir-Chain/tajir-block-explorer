@@ -83,7 +83,7 @@ const Sprite = () => {
 
     return (
       <Flex flexWrap="wrap" fontSize="sm" columnGap={ 5 } rowGap={ 5 } justifyContent="flex-start">
-        { items.map((item) => <Item key={ item.name } { ...item } bgColor={{ _light: 'blackAlpha.100', _dark: 'whiteAlpha.100' }}/>) }
+        { items.map((item) => <Item key={ item.name } { ...item } bgColor={{ _light: 'red.100', _dark: 'red.100' }}/>) }
       </Flex>
     );
   })();

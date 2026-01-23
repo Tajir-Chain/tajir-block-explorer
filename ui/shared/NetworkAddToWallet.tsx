@@ -37,7 +37,7 @@ const NetworkAddToWallet = ({ source, onAddSuccess }: Props) => {
         backgroundColor: "yellow.50",
       }}
       _dark={{
-        backgroundColor: "transparent",
+        backgroundColor: "#f3cd521A",
       }}
     >
       {/* <IconSvg name={ walletInfo.icon } boxSize={ 3 }/> */}
