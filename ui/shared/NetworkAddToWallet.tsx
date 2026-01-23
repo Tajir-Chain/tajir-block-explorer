@@ -6,6 +6,7 @@ import useProvider from "lib/web3/useProvider";
 import { WALLETS_INFO } from "lib/web3/wallets";
 import { Button } from "toolkit/chakra/button";
 import IconSvg from "ui/shared/IconSvg";
+import { Image } from "@chakra-ui/react";
 
 interface Props {
   source: "Footer" | "Top bar";
@@ -40,6 +41,12 @@ const NetworkAddToWallet = ({ source, onAddSuccess }: Props) => {
       }}
     >
       {/* <IconSvg name={ walletInfo.icon } boxSize={ 3 }/> */}
+      <Image
+        src="https://res.cloudinary.com/dd98ifrkd/image/upload/v1767863617/609DD8F3-B622-4A2D-99E7-12316BC973C4-fotor-bg-remover-2025112012277_1_4_jls0lm.svg"
+        alt="Wallet Icon"
+        boxSize={4}
+        mr={1}
+      />
       Add {config.chain.name}
     </Button>
   );
