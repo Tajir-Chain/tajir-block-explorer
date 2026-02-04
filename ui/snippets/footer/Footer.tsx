@@ -16,6 +16,10 @@ import { copy } from "toolkit/utils/htmlEntities";
 import IconSvg from "ui/shared/IconSvg";
 import { CONTENT_MAX_WIDTH } from "ui/shared/layout/utils";
 import NetworkAddToWallet from "ui/shared/NetworkAddToWallet";
+import AdditionalInfoButton from "ui/shared/AdditionalInfoButton";
+import { PopoverBody, PopoverContent, PopoverRoot, PopoverTrigger } from "toolkit/chakra/popover";
+import { DialogBody, DialogContent, DialogHeader, DialogRoot, DialogTrigger } from "toolkit/chakra/dialog";
+import useIsMobile from "lib/hooks/useIsMobile";
 
 import FooterLinkItem from "./FooterLinkItem";
 import IntTxsIndexingStatus from "./IntTxsIndexingStatus";
@@ -44,37 +48,37 @@ const Footer = () => {
       icon: "edit" as const,
       iconSize: "16px",
       text: "Submit an issue",
-      url: "#",
+      url: "https://github.com/",
     },
     {
       icon: "social/git" as const,
       iconSize: "18px",
       text: "Contribute",
-      url: "#",
+      url: "https://github.com/",
     },
     {
       icon: "social/twitter" as const,
       iconSize: "18px",
       text: "X (ex-Twitter)",
-      url: "#",
+      url: "https://x.com/",
     },
     {
       icon: "social/discord" as const,
       iconSize: "24px",
       text: "Discord",
-      url: "#",
+      url: "https://discord.com/",
     },
     {
       icon: "brands/blockscout" as const,
       iconSize: "18px",
       text: "All chains",
-      url: "#",
+      url: "/",
     },
     {
       icon: "donate" as const,
       iconSize: "20px",
       text: "Donate",
-      url: "#",
+      url: "/",
     },
   ];
 
@@ -99,6 +103,7 @@ const Footer = () => {
   })();
 
   const fetch = useFetch();
+  const isMobile = useIsMobile();
 
   const { isPlaceholderData, data: linksData } = useQuery<
     unknown,
@@ -195,9 +200,40 @@ const Footer = () => {
                 </Text>
               </Text>
             )}
-            <Text>
-              Copyright {copy} Tajir Limited {new Date().getFullYear()}
-            </Text>
+            <Flex alignItems="center" columnGap={1} mt={2}>
+              <Text>
+                Copyright {copy} Tajir Chain {new Date().getFullYear()}
+              </Text>
+
+              {isMobile ? (
+                <DialogRoot size="full">
+                  <DialogTrigger asChild>
+                    <AdditionalInfoButton aria-label="About explorer" />
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>About</DialogHeader>
+                    <DialogBody p={2}>
+                      <Text>
+                        Explorer software based on Blockscout (GPL-3.0). Source available
+                      </Text>
+                    </DialogBody>
+                  </DialogContent>
+                </DialogRoot>
+              ) : (
+                <PopoverRoot positioning={{ placement: "top" }}>
+                  <PopoverTrigger>
+                    <AdditionalInfoButton aria-label="About explorer" />
+                  </PopoverTrigger>
+                  <PopoverContent w="300px" borderWidth="1px" borderColor="border.divider" borderRadius="base">
+                    <PopoverBody>
+                      <Text fontSize="xs">
+                        Explorer software based on Blockscout (GPL-3.0). Source available
+                      </Text>
+                    </PopoverBody>
+                  </PopoverContent>
+                </PopoverRoot>
+              )}
+            </Flex>
           </Box>
         </Box>
       );
