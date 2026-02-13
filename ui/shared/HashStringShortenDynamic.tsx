@@ -32,7 +32,11 @@ interface Props extends BoxProps {
 
 const HashStringShortenDynamic = ({ hash, fontWeight = '400', noTooltip, tailLength = TAIL_LENGTH, as = 'span', tooltipInteractive, ...props }: Props) => {
   const elementRef = useRef<HTMLSpanElement>(null);
-  const [ displayedString, setDisplayedString ] = React.useState(hash);
+  const [ displayedString, setDisplayedString ] = React.useState(hash || '');
+
+  if (!hash) {
+    return null;
+  }
 
   const isFontFaceLoaded = useFontFaceObserver([
     { family: BODY_TYPEFACE, weight: String(fontWeight) as FontFace['weight'] },
