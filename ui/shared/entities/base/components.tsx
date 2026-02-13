@@ -181,7 +181,7 @@ const IconShield = (props: IconShieldProps) => {
     // The colors can be changed on hover, if address is highlighted
     // Because the highlighted styles are described as CSS classes, we must do the same for the shield border color.
     // borderColor: 'bg.primary',
-    // backgroundColor: 'bg.primary',
+    backgroundColor: 'bg.primary',
     className: 'entity__shield',
   };
 

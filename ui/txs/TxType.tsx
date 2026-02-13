@@ -30,7 +30,7 @@ const TxType = ({ types, isLoading, ...rest }: Props) => {
   switch (typeToShow) {
     case 'contract_call':
       label = 'Contract call';
-      colorPalette = 'blue';
+      colorPalette = 'bright_gray';
       break;
     case 'blob_transaction':
       label = 'Blob txn';
@@ -50,7 +50,7 @@ const TxType = ({ types, isLoading, ...rest }: Props) => {
       break;
     case 'coin_transfer':
       label = 'Coin transfer';
-      colorPalette = 'orange';
+      colorPalette = 'bright_gray';
       break;
     case 'rootstock_remasc':
       label = 'REMASC';

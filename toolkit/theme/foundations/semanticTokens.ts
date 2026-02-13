@@ -59,8 +59,8 @@ const semanticTokens: ThemingConfig['semanticTokens'] = {
     // ELEMENTS
     address: {
       highlighted: {
-        bg: { value: { _light: '{colors.blue.50}', _dark: '{colors.blue.900}' } },
-        border: { value: { _light: '{colors.blue.200}', _dark: '{colors.blue.600}' } },
+        bg: { value: { _light: '{colors.green.100}', _dark: '{colors.green.900}' } },
+        border: { value: { _light: '{colors.green.200}', _dark: '{colors.green.600}' } },
       },
     },
 
@@ -211,8 +211,8 @@ const semanticTokens: ThemingConfig['semanticTokens'] = {
     },
     popover: {
       DEFAULT: {
-        bg: { value: { _light: '{colors.white}', _dark: '{colors.gray.900}' } },
-        shadow: { value: { _light: '{colors.blackAlpha.200}', _dark: '{colors.whiteAlpha.300}' } },
+        bg: { value: { _light: '#ededed', _dark: '{colors.gray.900}' } },
+        shadow: { value: { _light: '{colors.blackAlpha.900}', _dark: '{colors.whiteAlpha.900}' } },
       },
     },
     progress: {

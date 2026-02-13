@@ -21,7 +21,8 @@ const getMicroserviceSwaggerUrl = (api: ApiPropsBase) => `${ api.endpoint }${ ap
 export const REST_API_SECTIONS = [
   feature.isEnabled && {
     id: 'blockscout-core-api',
-    title: 'Blockscout core API',
+    // title: 'Blockscout core API',
+    title: 'Tajir Explorer API',
     swagger: {
       url: feature.coreApiSwaggerUrl,
       requestInterceptor: (req: SwaggerRequest) => {

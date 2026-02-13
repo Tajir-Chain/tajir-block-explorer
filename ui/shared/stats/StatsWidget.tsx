@@ -72,8 +72,10 @@ const StatsWidget = ({
         bgColor={
           isLoading
             ? { _light: "blackAlpha.50", _dark: "whiteAlpha.50" }
-            : { _light: "theme.stats.bg._light", _dark: "theme.stats.bg._dark" }
+            : {  _light: '#FFFFFF', _dark: '#131415'}
         }
+        border="1px solid"
+        borderColor="border.divider"
         p={3}
         borderRadius="base"
         justifyContent="space-between"

@@ -5,7 +5,7 @@ import config from "configs/app";
 const DEFAULT_THEME_COLORS = {
   bg: {
     primary: {
-      _light: { value: "#F5F5F7 " }, // colors.white
+      _light: { value: "#FBFBFB " }, // colors.white
       _dark: { value: "#101112" }, // colors.black
     },
   },
@@ -15,8 +15,8 @@ const DEFAULT_THEME_COLORS = {
       _dark: { value: "{colors.whiteAlpha.800}" },
     },
     secondary: {
-      _light: { value: "{colors.gray.500}" },
-      _dark: { value: "{colors.gray.400}" },
+      _light: { value: "#4B4B4B" },
+      _dark: { value: "#99A1AF" },
     },
   },
   hover: {
@@ -26,11 +26,11 @@ const DEFAULT_THEME_COLORS = {
   selected: {
     control: {
       text: {
-        _light: { value: "{colors.green.700}" },
+        _light: { value: "{colors.black.50}" },
         _dark: { value: "{colors.gray.50}" },
       },
       bg: {
-        _light: { value: "{colors.green.50}" },
+        _light: { value: "{colors.blackAlpha.50}" },
         _dark: { value: "{colors.whiteAlpha.50}" },
       },
     },
