@@ -17,8 +17,19 @@ import IconSvg from "ui/shared/IconSvg";
 import { CONTENT_MAX_WIDTH } from "ui/shared/layout/utils";
 import NetworkAddToWallet from "ui/shared/NetworkAddToWallet";
 import AdditionalInfoButton from "ui/shared/AdditionalInfoButton";
-import { PopoverBody, PopoverContent, PopoverRoot, PopoverTrigger } from "toolkit/chakra/popover";
-import { DialogBody, DialogContent, DialogHeader, DialogRoot, DialogTrigger } from "toolkit/chakra/dialog";
+import {
+  PopoverBody,
+  PopoverContent,
+  PopoverRoot,
+  PopoverTrigger,
+} from "toolkit/chakra/popover";
+import {
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogRoot,
+  DialogTrigger,
+} from "toolkit/chakra/dialog";
 import useIsMobile from "lib/hooks/useIsMobile";
 
 import FooterLinkItem from "./FooterLinkItem";
@@ -45,40 +56,10 @@ const Footer = () => {
 
   const BLOCKSCOUT_LINKS = [
     {
-      icon: "edit" as const,
-      iconSize: "16px",
-      text: "Submit an issue",
-      url: "https://github.com/",
-    },
-    {
-      icon: "social/git" as const,
-      iconSize: "18px",
-      text: "Contribute",
-      url: "https://github.com/",
-    },
-    {
       icon: "social/twitter" as const,
       iconSize: "18px",
       text: "X (ex-Twitter)",
       url: "https://x.com/",
-    },
-    {
-      icon: "social/discord" as const,
-      iconSize: "24px",
-      text: "Discord",
-      url: "https://discord.com/",
-    },
-    {
-      icon: "brands/blockscout" as const,
-      iconSize: "18px",
-      text: "All chains",
-      url: "/",
-    },
-    {
-      icon: "donate" as const,
-      iconSize: "20px",
-      text: "Donate",
-      url: "/",
     },
   ];
 
@@ -214,7 +195,8 @@ const Footer = () => {
                     <DialogHeader>About</DialogHeader>
                     <DialogBody p={2}>
                       <Text>
-                        Explorer software based on Blockscout (GPL-3.0). Source available
+                        Explorer software based on Blockscout (GPL-3.0). Source
+                        available
                       </Text>
                     </DialogBody>
                   </DialogContent>
@@ -224,10 +206,16 @@ const Footer = () => {
                   <PopoverTrigger>
                     <AdditionalInfoButton aria-label="About explorer" />
                   </PopoverTrigger>
-                  <PopoverContent w="300px" borderWidth="1px" borderColor="border.divider" borderRadius="base">
+                  <PopoverContent
+                    w="300px"
+                    borderWidth="1px"
+                    borderColor="border.divider"
+                    borderRadius="base"
+                  >
                     <PopoverBody>
                       <Text fontSize="xs">
-                        Explorer software based on Blockscout (GPL-3.0). Source available
+                        Explorer software based on Blockscout (GPL-3.0). Source
+                        available
                       </Text>
                     </PopoverBody>
                   </PopoverContent>
@@ -350,7 +338,7 @@ const Footer = () => {
         {renderProjectInfo({ lg: "info" })}
         {renderRecaptcha({ lg: "recaptcha" })}
 
-        <Grid
+        {/* <Grid
           gridArea={{ lg: "links-bottom" }}
           gap={1}
           gridTemplateColumns={{
@@ -364,8 +352,22 @@ const Footer = () => {
             xl: "repeat(2, auto)",
           }}
           gridAutoFlow={{ base: "row", lg: "column" }}
-          alignContent="start"
+          alignContent="end"
+          alignSelf={{ lg: "end" }} 
           justifyContent={{ lg: "flex-end" }}
+          mt={{ base: 8, lg: 0 }}
+        >
+          {BLOCKSCOUT_LINKS.map((link) => (
+            <FooterLinkItem {...link} key={link.text} />
+          ))}
+        </Grid> */}
+
+        <Grid
+          gridArea={{ lg: "links-bottom" }}
+          gap={3}
+          alignContent="end"
+          justifyContent={{ base: "flex-start", lg: "flex-end" }}
+          alignSelf={{ lg: "end" }} 
           mt={{ base: 8, lg: 0 }}
         >
           {BLOCKSCOUT_LINKS.map((link) => (

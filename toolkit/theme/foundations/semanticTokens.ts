@@ -211,8 +211,8 @@ const semanticTokens: ThemingConfig['semanticTokens'] = {
     },
     popover: {
       DEFAULT: {
-        bg: { value: { _light: '{colors.white}', _dark: '{colors.gray.900}' } },
-        shadow: { value: { _light: '{colors.blackAlpha.200}', _dark: '{colors.whiteAlpha.300}' } },
+        bg: { value: { _light: '#ededed', _dark: '{colors.gray.900}' } },
+        shadow: { value: { _light: '{colors.blackAlpha.900}', _dark: '{colors.whiteAlpha.900}' } },
       },
     },
     progress: {
