@@ -59,7 +59,7 @@ const Footer = () => {
       icon: "social/twitter" as const,
       iconSize: "18px",
       text: "X (ex-Twitter)",
-      url: "https://x.com/",
+      url: "https://x.com/tajirchain",
     },
   ];
 
