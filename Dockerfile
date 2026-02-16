@@ -187,7 +187,7 @@ COPY --from=builder /app/deploy/tools/favicon-generator ./deploy/tools/favicon-g
 RUN ["chmod", "-R", "777", "./deploy/tools/favicon-generator"]
 RUN ["chmod", "-R", "777", "./public"]
 ## API Swagger spec (same-origin avoids CORS; source: Tajir-Chain/swaggers fork)
-ADD https://raw.githubusercontent.com/Tajir-Chain/swaggers/main/blockscout/master/polygon_zkevm/swagger.yaml ./public/swagger.yaml
+ADD https://raw.githubusercontent.com/Tajir-Chain/swaggers/master/blockscout/master/polygon_zkevm/swagger.yaml ./public/swagger.yaml
 ## Sitemap generator
 COPY --chmod=755 ./deploy/scripts/sitemap_generator.sh .
 COPY --from=builder /app/deploy/tools/sitemap-generator ./deploy/tools/sitemap-generator
