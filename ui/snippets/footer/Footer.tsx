@@ -13,7 +13,7 @@ import useIssueUrl from "lib/hooks/useIssueUrl";
 import { Link } from "toolkit/chakra/link";
 import { Skeleton } from "toolkit/chakra/skeleton";
 import { copy } from "toolkit/utils/htmlEntities";
-import IconSvg from "ui/shared/IconSvg";
+// import IconSvg from "ui/shared/IconSvg";
 import { CONTENT_MAX_WIDTH } from "ui/shared/layout/utils";
 import NetworkAddToWallet from "ui/shared/NetworkAddToWallet";
 import AdditionalInfoButton from "ui/shared/AdditionalInfoButton";
@@ -32,6 +32,9 @@ import {
 } from "toolkit/chakra/dialog";
 import useIsMobile from "lib/hooks/useIsMobile";
 
+import * as cookies from "lib/cookies";
+import { useAppContext } from "lib/contexts/app";
+
 import FooterLinkItem from "./FooterLinkItem";
 import IntTxsIndexingStatus from "./IntTxsIndexingStatus";
 import getApiVersionUrl from "./utils/getApiVersionUrl";
@@ -42,6 +45,24 @@ const FRONT_VERSION_URL = `https://github.com/blockscout/frontend/tree/${config.
 const FRONT_COMMIT_URL = `https://github.com/blockscout/frontend/commit/${config.UI.footer.frontendCommit}`;
 
 const Footer = () => {
+  const { cookies: appCookies } = useAppContext();
+
+  const hideAddToWalletButtonCookie = cookies.get(
+    cookies.NAMES.HIDE_ADD_TO_WALLET_BUTTON,
+    appCookies,
+  );
+
+  const [isAddChainButtonVisible, setIsAddChainButtonVisible] = React.useState(
+    hideAddToWalletButtonCookie !== "footer",
+  );
+
+  const handleAddSuccess = React.useCallback(() => {
+    cookies.set(cookies.NAMES.HIDE_ADD_TO_WALLET_BUTTON, "footer", {
+      expires: 3 * 365,
+    });
+    setIsAddChainButtonVisible(false);
+  }, []);
+
   const { data: backendVersionData } = useApiQuery(
     "general:config_backend_version",
     {
@@ -119,9 +140,16 @@ const Footer = () => {
           _empty={{ display: "none" }}
         >
           {!config.UI.indexingAlert.intTxs.isHidden && <IntTxsIndexingStatus />}
-          {!config.features.opSuperchain.isEnabled && (
+          {/* {!config.features.opSuperchain.isEnabled && (
             <NetworkAddToWallet source="Footer" />
-          )}
+          )} */}
+          {!config.features.opSuperchain.isEnabled &&
+            isAddChainButtonVisible && (
+              <NetworkAddToWallet
+                source="Footer"
+                onAddSuccess={handleAddSuccess}
+              />
+            )}
         </Flex>
       );
     },
@@ -367,7 +395,7 @@ const Footer = () => {
           gap={3}
           alignContent="end"
           justifyContent={{ base: "flex-start", lg: "flex-end" }}
-          alignSelf={{ lg: "end" }} 
+          alignSelf={{ lg: "end" }}
           mt={{ base: 8, lg: 0 }}
         >
           {BLOCKSCOUT_LINKS.map((link) => (
