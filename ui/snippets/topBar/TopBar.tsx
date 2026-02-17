@@ -16,7 +16,7 @@ import TopBarStats from './TopBarStats';
 
 const TopBar = () => {
   const hideAddToWalletButtonCookie = cookies.get(cookies.NAMES.HIDE_ADD_TO_WALLET_BUTTON, useAppContext().cookies);
-  const [ isAddChainButtonVisible, setIsAddChainButtonVisible ] = React.useState(hideAddToWalletButtonCookie !== 'topbar');
+  const [isAddChainButtonVisible, setIsAddChainButtonVisible] = React.useState(hideAddToWalletButtonCookie !== 'topbar');
 
   const web3 = useProvider();
   const isMobile = useIsMobile();
@@ -35,37 +35,37 @@ const TopBar = () => {
   const handleAddSuccess = React.useCallback(() => {
     cookies.set(cookies.NAMES.HIDE_ADD_TO_WALLET_BUTTON, 'topbar', { expires: 3 * 365 });
     setIsAddChainButtonVisible(false);
-  }, [ ]);
+  }, []);
 
   return (
     // not ideal if scrollbar is visible, but better than having a horizontal scroll
-    <Box bgColor={{ _light: 'theme.topbar.bg._light', _dark: 'black' }} position="sticky" left={ 0 } width="100%" maxWidth="100vw"
-       borderBottomWidth="1px"          
-      borderColor="border.divider" 
-      >
+    <Box bgColor={{ _light: 'theme.topbar.bg._light', _dark: 'black' }} position="sticky" left={0} width="100%" maxWidth="100vw"
+      borderBottomWidth="1px"
+      borderColor="border.divider"
+    >
       <Flex
-        py={ 3 }
+        py={3}
         px={{ base: 3, lg: 6 }}
         m="0 auto"
         justifyContent="space-between"
         alignItems="center"
-        maxW={ `${ CONTENT_MAX_WIDTH }px` }
+        maxW={`${CONTENT_MAX_WIDTH}px`}
       >
-        <HStack gap={ 0 } fontSize="xs">
-          { Boolean(config.UI.featuredNetworks.items) && <NetworkMenu/> }
-          { !config.features.opSuperchain.isEnabled ? <TopBarStats/> : <div/> }
+        <HStack gap={0} fontSize="xs">
+          {Boolean(config.UI.featuredNetworks.items) && <NetworkMenu />}
+          {!config.features.opSuperchain.isEnabled ? <TopBarStats /> : <div />}
         </HStack>
         <HStack
           alignItems="center"
-          separator={ <Separator mx={{ base: 2, lg: 3 }} height={ 4 }/> }
+          separator={<Separator mx={{ base: 2, lg: 3 }} height={4} />}
         >
-          { (hasAddChainButton || hasDeFiDropdown) && (
+          {(hasAddChainButton || hasDeFiDropdown) && (
             <HStack>
-              { hasAddChainButton && <NetworkAddToWallet source="Top bar" onAddSuccess={ handleAddSuccess }/> }
-              { hasDeFiDropdown && <DeFiDropdown/> }
+              {hasAddChainButton && <NetworkAddToWallet source="Top bar" onAddSuccess={handleAddSuccess} />}
+              {hasDeFiDropdown && <DeFiDropdown />}
             </HStack>
-          ) }
-          <Settings/>
+          )}
+          <Settings />
         </HStack>
       </Flex>
     </Box>

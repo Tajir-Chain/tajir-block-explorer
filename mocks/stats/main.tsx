@@ -50,7 +50,7 @@ export const base: stats.MainPageStats = {
     chart: averageGasPrice.chart,
     info: {
       id: 'newTxnsWindow',
-      title: 'Daily transactions',
+      title: 'Number of transactions',
       description: 'The chart displays daily transactions for the past 30 days',
       resolutions: [
         'DAY',

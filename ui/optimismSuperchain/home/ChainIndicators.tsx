@@ -35,7 +35,7 @@ const ChainIndicators = () => {
   const indicators: Array<TChainIndicator> = React.useMemo(() => ([
     statsQuery.data && {
       id: 'daily_txs' as const,
-      title: statsQuery.data.new_txns_multichain_window?.info?.title || 'Daily transactions',
+      title: 'Number of transactions',
       value: (() => {
         if (statsQuery.data.yesterday_txns_multichain?.value) {
           return Number(statsQuery.data.yesterday_txns_multichain.value).toLocaleString(undefined, { maximumFractionDigits: 2, notation: 'compact' });
