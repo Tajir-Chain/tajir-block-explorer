@@ -25,8 +25,8 @@ const TEMPLATE_MAP: Record<Route['pathname'], string> = {
   '/tokens': 'Tokens list - %network_name% explorer',
   '/token/[hash]': '%network_name% token details',
   '/token/[hash]/instance/[id]': '%network_name% NFT instance',
-  '/apps': `%network_name% ${ dappEntityName }s - Explore top ${ dappEntityName }s`,
-  '/apps/[id]': `%network_name% marketplace ${ dappEntityName }`,
+  '/apps': `%network_name% ${dappEntityName}s - Explore top ${dappEntityName}s`,
+  '/apps/[id]': `%network_name% marketplace ${dappEntityName}`,
   '/essential-dapps/[id]': '%id_cap%',
   '/stats': '%network_name% stats - %network_name% network insights',
   '/stats/[id]': '%network_name% stats - %id% chart',
@@ -111,7 +111,7 @@ const TEMPLATE_MAP_ENHANCED: Partial<Record<Route['pathname'], string>> = {
 
 export function make(pathname: Route['pathname'], isEnriched = false) {
   const template = (isEnriched ? TEMPLATE_MAP_ENHANCED[pathname] : undefined) ?? TEMPLATE_MAP[pathname];
-  const postfix = config.meta.promoteBlockscoutInTitle ? ' | Blockscout' : '';
+  const postfix = config.meta.promoteBlockscoutInTitle ? ' | Tajir Chain' : '';
 
   return (template + postfix).trim();
 }
