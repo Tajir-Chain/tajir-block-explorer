@@ -22,7 +22,7 @@ export default function useAddChainClick({ source, onSuccess }: Props) {
   const multichainContext = useMultichainContext();
   const chainConfig = multichainContext?.chain.app_config ?? config;
 
-  return React.useCallback(async () => {
+  return React.useCallback(async() => {
     if (!wallet || !provider) {
       return;
     }
@@ -61,5 +61,5 @@ export default function useAddChainClick({ source, onSuccess }: Props) {
         description: (error as Error)?.message || 'Something went wrong',
       });
     }
-  }, [addChain, provider, wallet, switchChain, source, onSuccess, chainConfig]);
+  }, [ addChain, provider, wallet, switchChain, source, onSuccess, chainConfig ]);
 }
