@@ -2,8 +2,8 @@ import { Flex, Separator, Box, HStack } from '@chakra-ui/react';
 import React from 'react';
 
 import config from 'configs/app';
-import { useAppContext } from 'lib/contexts/app';
-import * as cookies from 'lib/cookies';
+import { useMultichainContext } from 'lib/contexts/multichain';
+import useAccount from 'lib/web3/useAccount';
 import useIsMobile from 'lib/hooks/useIsMobile';
 import useProvider from 'lib/web3/useProvider';
 import { CONTENT_MAX_WIDTH } from 'ui/shared/layout/utils';
@@ -15,27 +15,64 @@ import Settings from './settings/Settings';
 import TopBarStats from './TopBarStats';
 
 const TopBar = () => {
-  const hideAddToWalletButtonCookie = cookies.get(cookies.NAMES.HIDE_ADD_TO_WALLET_BUTTON, useAppContext().cookies);
-  const [isAddChainButtonVisible, setIsAddChainButtonVisible] = React.useState(hideAddToWalletButtonCookie !== 'topbar');
-
   const web3 = useProvider();
   const isMobile = useIsMobile();
+  const { chainId: accountChainId } = useAccount();
+  const multichainContext = useMultichainContext();
+  const chainConfig = multichainContext?.chain.app_config ?? config;
+  const [currentChainId, setCurrentChainId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (accountChainId) {
+      setCurrentChainId(accountChainId.toString());
+      return;
+    }
+
+    const provider = web3.data?.provider;
+    if (!provider) return;
+
+    const fetchChainId = async () => {
+      try {
+        const chainId = (await provider.request({
+          method: "eth_chainId",
+        })) as string;
+        setCurrentChainId(chainId);
+      } catch (error) {
+        console.error("Failed to fetch chainId", error);
+      }
+    };
+
+    fetchChainId();
+
+    const handleChainChanged = (chainId: string) => {
+      setCurrentChainId(chainId);
+    };
+
+    provider.on("chainChanged", handleChainChanged);
+
+    return () => {
+      if (provider.removeListener) {
+        provider.removeListener("chainChanged", handleChainChanged);
+      }
+    };
+  }, [accountChainId, web3.data?.provider]);
+
+  const isChainAlreadyAdded =
+    currentChainId &&
+    chainConfig.chain.id &&
+    Number(currentChainId) === Number(chainConfig.chain.id);
 
   const hasAddChainButton = Boolean(
-    isAddChainButtonVisible &&
+    !isChainAlreadyAdded &&
     web3.data?.provider &&
     web3.data?.wallet &&
-    config.chain.rpcUrls.length &&
-    config.features.web3Wallet.isEnabled &&
-    !config.features.opSuperchain.isEnabled &&
+    chainConfig.chain.rpcUrls.length &&
+    chainConfig.features.web3Wallet.isEnabled &&
+    !chainConfig.features.opSuperchain.isEnabled &&
     !isMobile,
   );
   const hasDeFiDropdown = Boolean(config.features.deFiDropdown.isEnabled);
 
-  const handleAddSuccess = React.useCallback(() => {
-    cookies.set(cookies.NAMES.HIDE_ADD_TO_WALLET_BUTTON, 'topbar', { expires: 3 * 365 });
-    setIsAddChainButtonVisible(false);
-  }, []);
 
   return (
     // not ideal if scrollbar is visible, but better than having a horizontal scroll
@@ -61,7 +98,7 @@ const TopBar = () => {
         >
           {(hasAddChainButton || hasDeFiDropdown) && (
             <HStack>
-              {hasAddChainButton && <NetworkAddToWallet source="Top bar" onAddSuccess={handleAddSuccess} />}
+              {hasAddChainButton && <NetworkAddToWallet source="Top bar" />}
               {hasDeFiDropdown && <DeFiDropdown />}
             </HStack>
           )}
