@@ -73,3 +73,31 @@ jobs:
           tags: |
             ${{ env.DOCKER_HUB_REPO }}:${{ steps.get_version.outputs.new_version }}
             ${{ env.DOCKER_HUB_REPO }}:latest
+
+      - name: Notify Slack (Success)
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"🚀 <@U09LHPZ4RGV> *Deployment Successful*\n\n\
+            🧾 *Repo:* ${{ github.repository }}\n\
+            🏷️ *Git Tag:* ${{ steps.get_version.outputs.new_tag }}\n\
+            🐳 *Docker Image:* ${{ env.DOCKER_HUB_REPO }}:${{ steps.get_version.outputs.new_version }}\n\
+            🌿 *Branch:* ${{ github.ref_name }}\n\
+            👤 *Triggered by:* ${{ github.actor }}\n\
+            🔗 *Docker Hub:* https://hub.docker.com/r/${{ env.DOCKER_HUB_REPO }}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack (Failure)
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"❌ <@U09LHPZ4RGV> *Deployment Failed*\n\n\
+            🧾 *Repo:* ${{ github.repository }}\n\
+            🌿 *Branch:* ${{ github.ref_name }}\n\
+            👤 *Triggered by:* ${{ github.actor }}\n\
+            🔗 *Logs:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
