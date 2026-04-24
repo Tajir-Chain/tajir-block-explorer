@@ -39,7 +39,7 @@ const UserWalletButton = ({ size, variant, isPending, isAutoConnectDisabled, add
 
   return (
     <Tooltip
-      content="Connect your wallet to Tajir devnet for full-featured access"
+      content="Connect your wallet to Tajir Testnet for full-featured access"
       disabled={ isMobile || Boolean(address) }
       openDelay={ 500 }
       disableOnMobile

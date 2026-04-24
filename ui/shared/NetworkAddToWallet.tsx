@@ -1,28 +1,61 @@
-import React from "react";
+import { Image } from "@chakra-ui/react";
+import React, { useEffect, useState } from "react";
 
 import config from "configs/app";
+import { useMultichainContext } from "lib/contexts/multichain";
 import useAddChainClick from "lib/web3/useAddChainClick";
 import useProvider from "lib/web3/useProvider";
-import { WALLETS_INFO } from "lib/web3/wallets";
 import { Button } from "toolkit/chakra/button";
-import IconSvg from "ui/shared/IconSvg";
-import { Image } from "@chakra-ui/react";
 
 interface Props {
   source: "Footer" | "Top bar";
-  onAddSuccess?: () => void;
 }
 
-const NetworkAddToWallet = ({ source, onAddSuccess }: Props) => {
-  const { data: { wallet } = {} } = useProvider();
+const NetworkAddToWallet = ({ source }: Props) => {
+  const { data: { wallet, provider } = {} } = useProvider();
+  const multichainContext = useMultichainContext();
+  const chainConfig = multichainContext?.chain.app_config ?? config;
+  const [currentChainId, setCurrentChainId] = useState<string | null>(null);
 
-  const handleClick = useAddChainClick({ source, onSuccess: onAddSuccess });
+  useEffect(() => {
+    if (!provider) return;
 
-  if (!wallet) {
+    const fetchChainId = async () => {
+      try {
+        const chainId = (await provider.request({
+          method: "eth_chainId",
+        })) as string;
+        setCurrentChainId(chainId);
+      } catch (error) {
+        console.error("Failed to fetch chainId", error);
+      }
+    };
+
+    fetchChainId();
+
+    const handleChainChanged = (chainId: string) => {
+      setCurrentChainId(chainId);
+    };
+
+    provider.on("chainChanged", handleChainChanged);
+
+    return () => {
+      if (provider.removeListener) {
+        provider.removeListener("chainChanged", handleChainChanged);
+      }
+    };
+  }, [provider]);
+
+  const handleClick = useAddChainClick({ source });
+
+  const isChainAlreadyAdded =
+    currentChainId &&
+    chainConfig.chain.id &&
+    Number(currentChainId) === Number(chainConfig.chain.id);
+
+  if (!wallet || isChainAlreadyAdded) {
     return null;
   }
-
-  const walletInfo = WALLETS_INFO[wallet];
 
   return (
     <Button
@@ -40,16 +73,17 @@ const NetworkAddToWallet = ({ source, onAddSuccess }: Props) => {
         backgroundColor: "#f3cd521A",
       }}
     >
-      {/* <IconSvg name={ walletInfo.icon } boxSize={ 3 }/> */}
       <Image
         src="https://res.cloudinary.com/dd98ifrkd/image/upload/v1767863617/609DD8F3-B622-4A2D-99E7-12316BC973C4-fotor-bg-remover-2025112012277_1_4_jls0lm.svg"
         alt="Wallet Icon"
         boxSize={4}
         mr={1}
       />
-      Add {config.chain.name}
+      Add {chainConfig.chain.name}
     </Button>
   );
 };
 
 export default React.memo(NetworkAddToWallet);
+
+
