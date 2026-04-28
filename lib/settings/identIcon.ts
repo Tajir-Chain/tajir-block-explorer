@@ -7,12 +7,12 @@ export const IDENTICONS: Array<{ label: string; id: IdenticonType; sampleBg: str
     sampleBg: 'url("/static/identicon_logos/github.png") center / contain no-repeat',
   },
   {
-    label: 'Metamask jazzicon',
+    label: 'Jazzicon',
     id: 'jazzicon',
     sampleBg: 'url("/static/identicon_logos/jazzicon.png") center / contain no-repeat',
   },
   {
-    label: 'Ethereum blockies',
+    label: 'Blockies',
     id: 'blockie',
     sampleBg: 'url("/static/identicon_logos/blockies.png") center / contain no-repeat',
   },
