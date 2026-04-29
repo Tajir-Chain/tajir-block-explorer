@@ -83,7 +83,7 @@ const UI = Object.freeze({
     },
   },
   maintenanceAlert: {
-    // message: getEnvValue('NEXT_PUBLIC_MAINTENANCE_ALERT_MESSAGE'),
+     message: getEnvValue('NEXT_PUBLIC_MAINTENANCE_ALERT_MESSAGE'),
   },
   explorers: {
     items: parseEnvJson<Array<NetworkExplorer>>(getEnvValue('NEXT_PUBLIC_NETWORK_EXPLORERS')) || [],

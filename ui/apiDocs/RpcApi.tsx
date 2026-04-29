@@ -10,7 +10,7 @@ const RpcApi = () => {
         This API is provided for developers transitioning applications from Etherscan to Tajir Explorer API  and applications requiring general API and data support.
         It supports GET and POST requests.
       </Text>
-      <Link href="https://app.gitbook.com/o/w5Q87ZGYNeEKY9GUGNBA/s/AbtkglQlMKahYwDUwHV1/json-rpc-and-eth-compatible-rpc-endpoints" external mt={ 6 }>View modules</Link>
+      <Link href="https://tajir-chain.gitbook.io/tajir_chain-docs/json-rpc-and-eth-compatible-rpc-endpoints" external mt={ 6 }>View modules</Link>
     </Box>
   );
 };

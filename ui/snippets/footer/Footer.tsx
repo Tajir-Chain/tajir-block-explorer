@@ -158,18 +158,18 @@ const Footer = () => {
           <Box mt={6} alignItems="start" textStyle="xs">
             {apiVersionUrl && (
               <Text>
-                Backend:{" "}
+                Powered By{" "}
                 <Text
                   as="span"
                   color={{ base: "green.600", _dark: "green.300" }}
                   fontWeight="500"
                 >
-                  v9.3.2
+                  Polygon
                 </Text>
               </Text>
             )}
 
-            {frontendLink && (
+            {/* {frontendLink && (
               <Text>
                 Frontend:{" "}
                 <Text
@@ -180,7 +180,8 @@ const Footer = () => {
                   v2.5.3
                 </Text>
               </Text>
-            )}
+            )} */}
+            
             <Flex alignItems="center" columnGap={1} mt={2}>
               <Text>
                 Copyright {copy} Tajir Chain {new Date().getFullYear()}

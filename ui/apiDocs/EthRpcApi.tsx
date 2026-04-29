@@ -12,7 +12,7 @@ const EthRpcApi = () => {
         Ethereum nodes, ee the Ethereum JSON-RPC Specification for more details.
       </Text>
       <Link
-        href="https://app.gitbook.com/o/w5Q87ZGYNeEKY9GUGNBA/s/AbtkglQlMKahYwDUwHV1/eth-rpc-api"
+        href="https://tajir-chain.gitbook.io/tajir_chain-docs/eth-rpc-api"
         external
         mt={6}
       >
