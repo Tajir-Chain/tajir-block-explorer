@@ -64,7 +64,7 @@ test('with Get gas button', async({ render, mockApiResponse, mockEnvs, mockAsset
   await mockEnvs([
     [
       'NEXT_PUBLIC_GAS_REFUEL_PROVIDER_CONFIG',
-      `{"name": "Need gas?", "dapp_id": "duck", "url_template": "https://duck.url/{chainId}", "logo": "${ ICON_URL }"}`,
+      `[{"name": "Need gas?", "dapp_id": "duck", "url_template": "https://duck.url/{chainId}", "logo": "${ ICON_URL }"}]`,
     ],
   ]);
   await mockApiResponse('general:stats', statsMock.base);
