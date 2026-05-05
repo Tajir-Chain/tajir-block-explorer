@@ -3,7 +3,7 @@ name: Build and Push Docker Image on devnet push
 on:
   push:
     branches:
-      - devnet
+      - none
 
 permissions:
   contents: write      

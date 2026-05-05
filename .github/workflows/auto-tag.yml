@@ -1,0 +1,231 @@
+name: Tag & Docker Build & Push
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - devnet
+      - testnet
+      - mainnet
+
+env:
+  DOCKERHUB_IMAGE: tajirchain/tajir-block-explorer
+permissions:
+  contents: write 
+
+jobs:
+  tag-and-publish:  
+    name: Tag, Build & Push
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ── Step 1: Compute next version ────────────────────────────────────────
+      - name: Compute next version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${{ github.base_ref }}"
+          PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          IMAGE="${DOCKERHUB_IMAGE}"
+
+          echo "Branch   : $BRANCH"
+          echo "PR labels: ${PR_LABELS:-none}"
+
+          version_gt() {
+            local sorted_max
+            sorted_max=$(printf '%s\n' "$1" "$2" | sort -V | tail -1)
+            [[ "$sorted_max" == "$1" && "$1" != "$2" ]]
+          }
+
+          get_base() {
+            echo "$1" | sed -E 's/^(devnet-v|testnet-v|v)//'
+          }
+
+          LATEST_DEVNET_TAG=$( git tag --list 'devnet-v*'              | sort -V | tail -1)
+          LATEST_TESTNET_TAG=$(git tag --list 'testnet-v*'             | sort -V | tail -1)
+          LATEST_MAINNET_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1)
+
+          if [ -n "$LATEST_DEVNET_TAG"  ]; then DEVNET_BASE=$(get_base  "$LATEST_DEVNET_TAG");  else DEVNET_BASE="0.0.0";  fi
+          if [ -n "$LATEST_TESTNET_TAG" ]; then TESTNET_BASE=$(get_base "$LATEST_TESTNET_TAG"); else TESTNET_BASE="0.0.0"; fi
+          if [ -n "$LATEST_MAINNET_TAG" ]; then MAINNET_BASE=$(get_base "$LATEST_MAINNET_TAG"); else MAINNET_BASE="0.0.0"; fi
+
+          echo "devnet  latest : ${LATEST_DEVNET_TAG:-none}  → base $DEVNET_BASE"
+          echo "testnet latest : ${LATEST_TESTNET_TAG:-none} → base $TESTNET_BASE"
+          echo "mainnet latest : ${LATEST_MAINNET_TAG:-none} → base $MAINNET_BASE"
+          echo "---"
+
+          BUMP=""
+          NEW_TAG=""
+
+          case "$BRANCH" in
+            devnet)
+              if   echo "$PR_LABELS" | grep -qw "major"; then BUMP="major"
+              elif echo "$PR_LABELS" | grep -qw "minor"; then BUMP="minor"
+              elif echo "$PR_LABELS" | grep -qw "patch"; then BUMP="patch"
+              else
+                echo "No patch/minor/major label — skipping."
+                echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+              fi
+
+              if [ -n "$LATEST_DEVNET_TAG" ]; then FROM_BASE="$DEVNET_BASE"
+              elif [ -n "$LATEST_MAINNET_TAG" ]; then FROM_BASE="$MAINNET_BASE"
+              else FROM_BASE="0.0.0"
+              fi
+
+              MAJOR=$(echo "$FROM_BASE" | cut -d. -f1)
+              MINOR=$(echo "$FROM_BASE" | cut -d. -f2)
+              PATCH=$(echo "$FROM_BASE" | cut -d. -f3)
+
+              case "$BUMP" in
+                major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+                minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+                patch) PATCH=$((PATCH+1)) ;;
+              esac
+
+              NEW_TAG="devnet-v${MAJOR}.${MINOR}.${PATCH}"
+              ;;
+
+            testnet)
+              if version_gt "$DEVNET_BASE" "$TESTNET_BASE"; then
+                echo "Promotion: devnet $DEVNET_BASE > testnet $TESTNET_BASE"
+                NEW_TAG="testnet-v${DEVNET_BASE}"
+                BUMP="promotion"
+              else
+                echo "testnet is already up to date with devnet — skipping."
+                echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+              fi
+              ;;
+
+            mainnet)
+              if version_gt "$TESTNET_BASE" "$MAINNET_BASE"; then
+                echo "Promotion: testnet $TESTNET_BASE > mainnet $MAINNET_BASE"
+                NEW_TAG="v${TESTNET_BASE}"
+                BUMP="promotion"
+              else
+                echo "mainnet is already up to date with testnet — skipping."
+                echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+              fi
+              ;;
+          esac
+
+          if git rev-parse -q --verify "refs/tags/${NEW_TAG}" > /dev/null 2>&1; then
+            echo "Tag $NEW_TAG already exists — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+
+          # Compute DockerHub image tags
+          IMAGE_TAGS="${IMAGE}:${NEW_TAG}"
+          if [[ "$NEW_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            IMAGE_TAGS="${IMAGE_TAGS},${IMAGE}:latest"
+          fi
+
+          echo "New tag    : $NEW_TAG  (bump: $BUMP)"
+          echo "Image tags : $IMAGE_TAGS"
+
+          echo "skip=false"           >> "$GITHUB_OUTPUT"
+          echo "new_tag=$NEW_TAG"     >> "$GITHUB_OUTPUT"
+          echo "bump=$BUMP"           >> "$GITHUB_OUTPUT"
+          echo "image_tags=$IMAGE_TAGS" >> "$GITHUB_OUTPUT"
+
+      # ── Step 2: Login to DockerHub ───────────────────────────────────────────
+      - name: Login to DockerHub
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # ── Step 3: Build Docker image (no push yet) ─────────────────────────────
+      - name: Build Docker image
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ steps.version.outputs.image_tags }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.new_tag }}
+
+      # ── Step 4: Create git tag (only if build succeeded) ────────────────────
+      - name: Create git tag
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          NEW_TAG="${{ steps.version.outputs.new_tag }}"
+          git tag -a "$NEW_TAG" \
+            -m "Release $NEW_TAG (bump: ${{ steps.version.outputs.bump }})"
+          git push origin "$NEW_TAG"
+          echo "Git tag pushed: $NEW_TAG"
+
+      # ── Step 5: Push Docker image (only if git tag succeeded) ───────────────
+      - name: Push Docker image to DockerHub
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          echo "${{ steps.version.outputs.image_tags }}" | tr ',' '\n' | while read tag; do
+            echo "Pushing $tag ..."
+            docker push "$tag"
+          done
+
+      # ── Step 6: Create GitHub Release (mainnet only) ────────────────────────
+      - name: Create GitHub Release
+        if: steps.version.outputs.skip != 'true' && github.base_ref == 'mainnet'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: "Release ${{ steps.version.outputs.new_tag }}"
+          generate_release_notes: true
+
+      # ── Slack Notifications ──────────────────────────────────────────────────
+      - name: Notify Slack (Success)
+        if: success() && steps.version.outputs.skip != 'true'
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"🚀 <!channel> *Deployment Successful*\n\n\
+            🧾 *Repo:* ${{ github.repository }}\n\
+            🏷️ *Git Tag:* ${{ steps.version.outputs.new_tag }}\n\
+            🐳 *Docker Image:* ${{ steps.version.outputs.image_tags }}\n\
+            🌿 *Branch:* ${{ github.base_ref }}\n\
+            👤 *Triggered by:* ${{ github.actor }}\n\
+            🔗 *Docker Hub:* https://hub.docker.com/r/${{ env.DOCKERHUB_IMAGE }}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack (Skipped)
+        if: steps.version.outputs.skip == 'true'
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"⏭️ <!channel> *Deployment Skipped*\n\n\
+            🧾 *Repo:* ${{ github.repository }}\n\
+            🌿 *Branch:* ${{ github.base_ref }}\n\
+            👤 *Triggered by:* ${{ github.actor }}\n\
+            ⚠️ *Reason:* No patch/minor/major label or branch already up to date\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack (Failure)  
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"❌ <!channel> *Deployment Failed*\n\n\
+            🧾 *Repo:* ${{ github.repository }}\n\
+            🌿 *Branch:* ${{ github.base_ref }}\n\
+            👤 *Triggered by:* ${{ github.actor }}\n\
+            🔗 *Logs:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
