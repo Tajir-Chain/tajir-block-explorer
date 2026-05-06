@@ -56,15 +56,15 @@ const LatestBlocks = () => {
   const handleNewBlockMessage: SocketMessage.NewBlock['handler'] = React.useCallback((payload) => {
     queryClient.setQueryData(getResourceKey('general:homepage_blocks'), (prevData: Array<Block> | undefined) => {
 
-      const newData = prevData ? [ ...prevData ] : [];
+      const newData = prevData ? [...prevData] : [];
 
       if (newData.some((block => block.height === payload.block.height))) {
         return newData;
       }
 
-      return [ payload.block, ...newData ].sort((b1, b2) => b2.height - b1.height).slice(0, blocksMaxCount);
+      return [payload.block, ...newData].sort((b1, b2) => b2.height - b1.height).slice(0, blocksMaxCount);
     });
-  }, [ queryClient, blocksMaxCount ]);
+  }, [queryClient, blocksMaxCount]);
 
   const channel = useSocketChannel({
     topic: 'blocks:new_block',
@@ -87,18 +87,18 @@ const LatestBlocks = () => {
 
     content = (
       <>
-        <VStack gap={ 2 } mb={ 3 } overflow="hidden" alignItems="stretch">
-          { dataToShow.map(((block, index) => (
+        <VStack gap={2} mb={3} overflow="hidden" alignItems="stretch">
+          {dataToShow.map(((block, index) => (
             <LatestBlocksItem
-              key={ block.height + (isPlaceholderData ? String(index) : '') }
-              block={ block }
-              isLoading={ isPlaceholderData }
-              animation={ initialList.getAnimationProp(block) }
+              key={block.height + (isPlaceholderData ? String(index) : '')}
+              block={block}
+              isLoading={isPlaceholderData}
+              animation={initialList.getAnimationProp(block)}
             />
-          ))) }
+          )))}
         </VStack>
         <Flex justifyContent="center">
-          <Link textStyle="sm" href={ route({ pathname: '/blocks' }) } color="yellow.400" textDecor="underline">View all blocks</Link>
+          <Link textStyle="sm" href={route({ pathname: '/blocks' })} color="yellow.600" textDecor="underline">View all blocks</Link>
         </Flex>
       </>
     );
@@ -107,28 +107,28 @@ const LatestBlocks = () => {
   const networkUtilization = getNetworkUtilizationParams(statsQueryResult.data?.network_utilization_percentage ?? 0);
 
   return (
-    <Box width={{ base: '100%', lg: '280px' }} flexShrink={ 0 }>
+    <Box width={{ base: '100%', lg: '280px' }} flexShrink={0}>
       <Heading level="3">Latest blocks</Heading>
-      { statsQueryResult.data?.network_utilization_percentage !== undefined && (
-        <Skeleton loading={ statsQueryResult.isPlaceholderData } mt={ 2 } display="inline-block" textStyle="sm">
+      {statsQueryResult.data?.network_utilization_percentage !== undefined && (
+        <Skeleton loading={statsQueryResult.isPlaceholderData} mt={2} display="inline-block" textStyle="sm">
           <Text as="span">
-            Network utilization:{ nbsp }
+            Network utilization:{nbsp}
           </Text>
-          <Tooltip content={ `${ upperFirst(networkUtilization.load) } load` }>
-            <Text as="span" color={ networkUtilization.color } fontWeight={ 700 }>
-              { statsQueryResult.data?.network_utilization_percentage.toFixed(2) }%
+          <Tooltip content={`${upperFirst(networkUtilization.load)} load`}>
+            <Text as="span" color={networkUtilization.color} fontWeight={700}>
+              {statsQueryResult.data?.network_utilization_percentage.toFixed(2)}%
             </Text>
           </Tooltip>
         </Skeleton>
-      ) }
-      { statsQueryResult.data?.celo && (
-        <Box whiteSpace="pre-wrap" textStyle="sm" mt={ 2 }>
+      )}
+      {statsQueryResult.data?.celo && (
+        <Box whiteSpace="pre-wrap" textStyle="sm" mt={2}>
           <span>Current epoch: </span>
-          <chakra.span fontWeight={ 700 }>#{ statsQueryResult.data.celo.epoch_number }</chakra.span>
+          <chakra.span fontWeight={700}>#{statsQueryResult.data.celo.epoch_number}</chakra.span>
         </Box>
-      ) }
-      <Box mt={ 3 }>
-        { content }
+      )}
+      <Box mt={3}>
+        {content}
       </Box>
     </Box>
   );

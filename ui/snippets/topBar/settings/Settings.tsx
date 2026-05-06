@@ -43,7 +43,7 @@ const Settings = () => {
               size="2xs"
               borderRadius="sm"
               aria-label="User settings"
-              color= "yellow.400"
+              color= "yellow.500"
             >
               <IconSvg name="gear"/>
             </IconButton>

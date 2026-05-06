@@ -53,8 +53,8 @@ const DeFiDropdown = () => {
           gap={0}
           fontWeight="500"
           color="black"
-          borderColor="yellow.400"
-          backgroundColor="yellow.400"
+          borderColor="yellow.500"
+          backgroundColor="yellow.500"
         >
           <chakra.span
             display={{ base: "none", lg: "inline" }}

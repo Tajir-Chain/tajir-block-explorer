@@ -43,8 +43,8 @@ const DEFAULT_THEME_COLORS = {
   },
   icon: {
     primary: {
-      _light: { value: "{colors.yellow.400}" },
-      _dark: { value: "{colors.yellow.400}" },
+      _light: { value: "{colors.yellow.500}" },
+      _dark: { value: "{colors.yellow.500}" },
     },
     secondary: {
       _light: { value: "{colors.gray.400}" },
@@ -166,16 +166,16 @@ const colors = {
     "900": { value: "#652B19" },
   },
   yellow: {
-    "50": { value: "#FFFBEA" },
-    "100": { value: "#FEF3C7" },
-    "200": { value: "#FDE68A" },
-    "300": { value: "#F9D96B" },
-    "400": { value: "#F3CD52" },
-    "500": { value: "#EAB308" },
-    "600": { value: "#CA8A04" },
-    "700": { value: "#A16207" },
-    "800": { value: "#854D0E" },
-    "900": { value: "#713F12" },
+    "50": { value: "#FFF9E5" },
+    "100": { value: "#FFF1CC" },
+    "200": { value: "#FFE499" },
+    "300": { value: "#FFD666" },
+    "400": { value: "#D4920A" },
+    "500": { value: "#C8860A" },
+    "600": { value: "#C8860A" },
+    "700": { value: "#A16B08" },
+    "800": { value: "#7A5106" },
+    "900": { value: "#533704" },
   },
   gray: {
     "50": { value: "#F7FAFC" },

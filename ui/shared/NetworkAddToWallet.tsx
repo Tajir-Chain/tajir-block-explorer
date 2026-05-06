@@ -63,14 +63,14 @@ const NetworkAddToWallet = ({ source }: Props) => {
       size="sm"
       borderWidth="1px"
       fontWeight="500"
-      color="yellow.400"
-      borderColor="yellow.400"
+      color="yellow.500"
+      borderColor="yellow.500"
       onClick={handleClick}
       _light={{
         backgroundColor: "yellow.50",
       }}
       _dark={{
-        backgroundColor: "#f3cd521A",
+        backgroundColor: "yellow.500/10",
       }}
     >
       <Image

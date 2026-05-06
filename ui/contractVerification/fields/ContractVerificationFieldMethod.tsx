@@ -80,7 +80,7 @@ const ContractVerificationFieldMethod = ({ methods }: Props) => {
 
   const tooltipContent = (
     <Box>
-      <span>Currently, Blockscout supports { methods.length } methods:</span>
+      <span>Currently, Tajir Explorer supports { methods.length } methods:</span>
       <List.Root as="ol" pl={ 5 }>
         { methods.map(renderPopoverListItem) }
       </List.Root>

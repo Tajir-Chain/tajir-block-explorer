@@ -50,6 +50,8 @@ const chain = Object.freeze({
   tokenStandard: getEnvValue('NEXT_PUBLIC_NETWORK_TOKEN_STANDARD_NAME') || 'ERC',
   rpcUrls,
   isTestnet: getEnvValue('NEXT_PUBLIC_IS_TESTNET') === 'true',
+  networkLabelImage: getEnvValue('NEXT_PUBLIC_NETWORK_LABEL_IMAGE') || '/static/labels/testnet.svg',
+  networkLabelText: getEnvValue('NEXT_PUBLIC_NETWORK_LABEL_TEXT') || 'This is a testnet transaction only',
   verificationType,
 });
 

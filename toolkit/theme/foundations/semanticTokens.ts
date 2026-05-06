@@ -46,6 +46,7 @@ const semanticTokens: ThemingConfig['semanticTokens'] = {
     },
     bg: {
       primary: { value: { _light: '{colors.theme.bg.primary._light}', _dark: '{colors.theme.bg.primary._dark}' } },
+      gold: { value: 'linear-gradient(135deg, #FFD700 0%, #D4920A 50%, #C8860A 100%)' },
     },
     border: {
       divider: { value: { _light: '{colors.blackAlpha.100}', _dark: '{colors.whiteAlpha.100}' } },
@@ -497,7 +498,7 @@ const semanticTokens: ThemingConfig['semanticTokens'] = {
     },
     rating: {
       DEFAULT: { value: { _light: '{colors.gray.200}', _dark: '{colors.gray.700}' } },
-      highlighted: { value: '{colors.yellow.400}' },
+      highlighted: { value: '{colors.yellow.500}' },
     },
   },
   shadows: {
