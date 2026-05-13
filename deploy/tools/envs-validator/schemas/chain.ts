@@ -43,4 +43,6 @@ export default yup.object({
       }),
     NEXT_PUBLIC_NETWORK_TOKEN_STANDARD_NAME: yup.string(),
     NEXT_PUBLIC_IS_TESTNET: yup.boolean(),
+    NEXT_PUBLIC_NETWORK_LABEL_IMAGE: yup.string(),
+    NEXT_PUBLIC_NETWORK_LABEL_TEXT: yup.string(),
 });

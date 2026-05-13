@@ -15,7 +15,7 @@ const TestnetWarning = ({ isLoading, className }: Props) => {
   }
 
   return (
-    <Alert status="warning" loading={isLoading} className={className}>This is a testnet transaction only</Alert>
+    <Alert status="warning" loading={isLoading} className={className}>{config.chain.networkLabelText}</Alert>
   );
 };
 
