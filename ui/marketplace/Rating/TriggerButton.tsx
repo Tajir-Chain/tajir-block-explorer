@@ -57,7 +57,7 @@ const TriggerButton = (
             { !fullView && (
               <IconSvg
                 name={ rating ? 'star_filled' : 'star_outline' }
-                color={ rating ? 'yellow.400' : 'icon.secondary' }
+                color={ rating ? 'yellow.500' : 'icon.secondary' }
                 boxSize={ 5 }
                 mr={ 1 }
               />

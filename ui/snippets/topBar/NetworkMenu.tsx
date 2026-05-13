@@ -27,7 +27,7 @@ const NetworkMenu = () => {
           onClick={ menu.onToggle }
           size="2xs"
           fontWeight={ 500 }
-          color="yellow.400"
+          color="yellow.500"
         >
           <IconSvg name="networks" boxSize="14px"/>
           <span>Networks</span>

@@ -37,6 +37,8 @@ const schema = yup
     NEXT_PUBLIC_NETWORK_NAME: yup.string().required(),
     NEXT_PUBLIC_NETWORK_SHORT_NAME: yup.string(),
     NEXT_PUBLIC_IS_TESTNET: yup.boolean(),
+    NEXT_PUBLIC_NETWORK_LABEL_IMAGE: yup.string(),
+    NEXT_PUBLIC_NETWORK_LABEL_TEXT: yup.string(),
 
     // 5. Features configuration
     // NOTE!: Not all features are supported in multichain mode, and some of them not relevant or enabled per chain basis
