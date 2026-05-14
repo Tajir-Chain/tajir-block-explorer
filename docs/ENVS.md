@@ -120,6 +120,8 @@ Also, be aware that if you customize the name of the currency or any of its deno
 | NEXT_PUBLIC_NETWORK_VERIFICATION_TYPE | `validation` \| `mining` \| 'fee reception' | Verification type in the network. Irrelevant for Arbitrum (verification type is always `posting`) and ZkEvm (verification type is always `sequencing`) L2s | - | `mining` | `validation` | v1.0.x+ |
 | NEXT_PUBLIC_NETWORK_TOKEN_STANDARD_NAME | `string` | Name of the standard for creating tokens | - | `ERC` | `BEP` | v1.31.0+ |
 | NEXT_PUBLIC_IS_TESTNET | `boolean`| Set to true if network is testnet | - | `false` | `true` | v1.0.x+ |
+| NEXT_PUBLIC_NETWORK_LABEL_IMAGE | `string` | URL to the image displayed as a network label (e.g. Testnet badge) | - | `/static/labels/testnet.svg` | `https://example.com/badge.svg` | v2.6.0+ |
+| NEXT_PUBLIC_NETWORK_LABEL_TEXT | `string` | Text displayed when hovering over the network label image | - | `This is a testnet transaction only` | `Beta Network` | v2.6.0+ |
 
 &nbsp;
 
