@@ -1,9 +1,14 @@
 import type { SystemStyleObject } from '@chakra-ui/react';
 import { Box, Flex, useToken, Center } from '@chakra-ui/react';
 import type { EditorProps } from '@monaco-editor/react';
-import MonacoEditor from '@monaco-editor/react';
+import MonacoEditor, { loader } from '@monaco-editor/react';
 import type * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import React from 'react';
+
+// Point @monaco-editor/react at our self-hosted assets instead of jsdelivr CDN.
+// Must be called at module scope (before any <MonacoEditor> mounts).
+// Assets are copied from node_modules/monaco-editor/min/vs → public/monaco/vs at build time.
+loader.config({ paths: { vs: '/monaco/vs' } });
 
 import type { File, Monaco } from './types';
 import type { SmartContractExternalLibrary } from 'types/api/contract';
