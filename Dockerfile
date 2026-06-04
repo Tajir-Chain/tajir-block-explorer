@@ -97,6 +97,11 @@ RUN set -a && \
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+# Self-host Monaco Editor — copy built assets before next build so they are
+# included in the Next.js standalone output (public/ is baked in at build time)
+RUN mkdir -p ./public/monaco && \
+    cp -r ./node_modules/monaco-editor/min/vs ./public/monaco/vs
+
 # Build app for production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN yarn build

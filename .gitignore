@@ -24,6 +24,8 @@
 /public/sitemap.xml
 /public/robots.txt
 /public/llms.txt
+# Monaco Editor self-hosted assets (generated at build time from node_modules/monaco-editor/min/vs)
+/public/monaco/
 /analyze
 
 # production
