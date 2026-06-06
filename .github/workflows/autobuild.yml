@@ -76,7 +76,6 @@ jobs:
           df -h
 
       - name: Build and push Docker image
-        id: push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -94,15 +93,13 @@ jobs:
         run: |
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\": \"🐳 <@U09LHPZ4RGV> *Docker Image Published*\n\n\
+            \"text\": \"🚀 <@U09LHPZ4RGV> *Deployment Successful*\n\n\
             🧾 *Repo:* ${{ github.repository }}\n\
             🏷️ *Git Tag:* ${{ steps.get_version.outputs.new_tag }}\n\
             🐳 *Docker Image:* ${{ env.DOCKER_HUB_REPO }}:${{ steps.get_version.outputs.new_version }}\n\
             🌿 *Branch:* ${{ github.ref_name }}\n\
             👤 *Triggered by:* ${{ github.actor }}\n\
-            🔗 *Docker Hub:* https://hub.docker.com/r/${{ env.DOCKER_HUB_REPO }}\n\
-            ✅ *Image pushed to DockerHub successfully. Deployment not triggered.*\n\
-            🔑 *Image SHA:* ${{ steps.push.outputs.digest }}\"
+            🔗 *Docker Hub:* https://hub.docker.com/r/${{ env.DOCKER_HUB_REPO }}\"
             }" \
             ${{ secrets.SLACK_WEBHOOK_URL }}
 
