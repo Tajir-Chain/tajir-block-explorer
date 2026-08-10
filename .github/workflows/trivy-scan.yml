@@ -1,17 +1,15 @@
 name: Trivy image scan
 
-# Builds the image the same way autobuild.yml does (no push) and scans it for
-# HIGH/CRITICAL CVEs. Full findings table is written to the run's Job Summary so
-# you can read results in the Actions tab instead of scanning locally.
+# Builds this repo's image and scans it for HIGH/CRITICAL CVEs. Full findings go
+# to the run's Job Summary (readable in the Actions tab). Fails the job on any
+# HIGH/CRITICAL (the gate) and pings Slack via the MT bot on push/manual runs.
 #
-# Runs on PRs + pushes to the security branch, and on demand (workflow_dispatch).
-# Fails the job when HIGH/CRITICAL findings remain — that's the gate.
+# Requires repo secrets: SLACK_BOT_TOKEN (xoxb-...), SLACK_CHANNEL_ID (C0...).
 
 on:
   pull_request:
   push:
-    branches:
-      - security/**
+    branches: [main, master, security/**]
   workflow_dispatch:
 
 permissions:
@@ -24,32 +22,15 @@ jobs:
   trivy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
           docker system prune -af || true
-          df -h
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Build locally (load into the docker daemon, do NOT push) so Trivy can scan it.
       - name: Build image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64
-          push: false
-          load: true
-          tags: ${{ env.IMAGE }}
-          build-args: |
-            GIT_COMMIT_SHA=${{ github.sha }}
-            GIT_TAG=${{ github.ref_name }}
+        run: docker build -t "$IMAGE" .
 
       - name: Install Trivy
         run: |
@@ -66,7 +47,6 @@ jobs:
           key: trivy-db-${{ github.run_id }}
           restore-keys: trivy-db-
 
-      # Non-failing pass → produce the full table for the Job Summary + artifact.
       - name: Trivy scan (report)
         run: |
           trivy image --severity HIGH,CRITICAL --scanners vuln \
@@ -76,7 +56,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Trivy HIGH/CRITICAL — \`${{ github.ref_name }}\` @ ${GITHUB_SHA::7}"
+            echo "## Trivy HIGH/CRITICAL — ${{ github.repository }} @ ${GITHUB_SHA::7}"
             echo '```'
             cat trivy-report.txt || echo "(no report produced)"
             echo '```'
@@ -90,20 +70,30 @@ jobs:
           path: trivy-report.txt
           if-no-files-found: ignore
 
-      # Failing pass → the actual gate. DB is cached from the run above, so it's fast.
-      - name: Trivy scan (gate)
+      # Gate: re-scan with exit-code 1. continue-on-error so the notify + explicit
+      # fail below still run. DB is cached from the report step, so this is fast.
+      - name: Trivy gate
+        id: gate
+        continue-on-error: true
         run: |
-          trivy image --severity HIGH,CRITICAL --scanners vuln \
-            --format table --exit-code 1 "$IMAGE"
+          trivy image --severity HIGH,CRITICAL --scanners vuln --exit-code 1 "$IMAGE"
 
       - name: Notify Slack on findings
-        if: failure()
+        if: steps.gate.outcome == 'failure' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
-          curl -X POST -H 'Content-type: application/json' \
+          curl -sS -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H 'Content-type: application/json; charset=utf-8' \
             --data "{
-              \"text\": \"🛡️ *Trivy: HIGH/CRITICAL vulnerabilities found*\n\
-              🧾 *Repo:* ${{ github.repository }}\n\
-              🌿 *Ref:* ${{ github.ref_name }}\n\
-              🔗 *Findings (Job Summary):* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
-            }" \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+              \"channel\": \"${SLACK_CHANNEL_ID}\",
+              \"text\": \"🛡️ *Trivy: HIGH/CRITICAL in ${{ github.repository }}* (ref \`${{ github.ref_name }}\`)\n🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }" || true
+
+      - name: Fail if findings
+        if: steps.gate.outcome == 'failure'
+        run: |
+          echo "HIGH/CRITICAL vulnerabilities present — see Job Summary." >&2
+          exit 1
