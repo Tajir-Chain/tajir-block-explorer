@@ -1,0 +1,112 @@
+name: Trivy image scan
+
+# Builds the image the same way autobuild.yml does (no push) and scans it for
+# HIGH/CRITICAL CVEs. Full findings table is written to the run's Job Summary so
+# you can read results in the Actions tab instead of scanning locally.
+#
+# Runs on PRs + pushes to the security branch, and on demand (workflow_dispatch).
+# Fails the job when HIGH/CRITICAL findings remain — that's the gate.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - security/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: scan-target:local
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          docker system prune -af || true
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build locally (load into the docker daemon, do NOT push) so Trivy can scan it.
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}
+          build-args: |
+            GIT_COMMIT_SHA=${{ github.sha }}
+            GIT_TAG=${{ github.ref_name }}
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      # Non-failing pass → produce the full table for the Job Summary.
+      - name: Trivy scan (report)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          ignore-unfixed: false
+          format: table
+          output: trivy-report.txt
+          exit-code: '0'
+
+      - name: Publish findings to Job Summary
+        if: always()
+        run: |
+          {
+            echo "## Trivy HIGH/CRITICAL — \`${{ github.ref_name }}\` @ ${GITHUB_SHA::7}"
+            echo '```'
+            cat trivy-report.txt || echo "(no report produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          if-no-files-found: ignore
+
+      # Failing pass → the actual gate. DB is cached from the run above, so it's fast.
+      - name: Trivy scan (gate)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          ignore-unfixed: false
+          format: table
+          exit-code: '1'
+
+      - name: Notify Slack on findings
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"🛡️ *Trivy: HIGH/CRITICAL vulnerabilities found*\n\
+              🧾 *Repo:* ${{ github.repository }}\n\
+              🌿 *Ref:* ${{ github.ref_name }}\n\
+              🔗 *Findings (Job Summary):* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
