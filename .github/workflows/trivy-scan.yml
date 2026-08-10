@@ -51,6 +51,14 @@ jobs:
             GIT_COMMIT_SHA=${{ github.sha }}
             GIT_TAG=${{ github.ref_name }}
 
+      - name: Install Trivy
+        run: |
+          TRIVY_VERSION=0.71.0
+          wget -qO /tmp/trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          sudo tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+          trivy --version
+
       - name: Cache Trivy DB
         uses: actions/cache@v4
         with:
@@ -58,17 +66,11 @@ jobs:
           key: trivy-db-${{ github.run_id }}
           restore-keys: trivy-db-
 
-      # Non-failing pass → produce the full table for the Job Summary.
+      # Non-failing pass → produce the full table for the Job Summary + artifact.
       - name: Trivy scan (report)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.IMAGE }}
-          severity: HIGH,CRITICAL
-          scanners: vuln
-          ignore-unfixed: false
-          format: table
-          output: trivy-report.txt
-          exit-code: '0'
+        run: |
+          trivy image --severity HIGH,CRITICAL --scanners vuln \
+            --format table --output trivy-report.txt --exit-code 0 "$IMAGE"
 
       - name: Publish findings to Job Summary
         if: always()
@@ -90,14 +92,9 @@ jobs:
 
       # Failing pass → the actual gate. DB is cached from the run above, so it's fast.
       - name: Trivy scan (gate)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.IMAGE }}
-          severity: HIGH,CRITICAL
-          scanners: vuln
-          ignore-unfixed: false
-          format: table
-          exit-code: '1'
+        run: |
+          trivy image --severity HIGH,CRITICAL --scanners vuln \
+            --format table --exit-code 1 "$IMAGE"
 
       - name: Notify Slack on findings
         if: failure()
