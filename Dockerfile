@@ -150,7 +150,9 @@ RUN cd ./deploy/tools/llms-txt-generator && yarn build
 # *****************************
 # Production image, copy all the files and run next
 FROM node:22.14.0-alpine AS runner
-RUN apk add --no-cache --upgrade bash curl jq unzip
+# apk upgrade patches base-layer OS packages (e.g. musl) baked into the pinned
+# node:22.14.0-alpine snapshot; `apk add --upgrade` only touches the named pkgs.
+RUN apk --no-cache upgrade && apk add --no-cache bash curl jq unzip
 
 ### APP
 WORKDIR /app
