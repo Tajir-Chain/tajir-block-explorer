@@ -80,17 +80,10 @@ jobs:
 
       - name: Notify Slack on findings
         if: steps.gate.outcome == 'failure' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
-          curl -sS -X POST https://slack.com/api/chat.postMessage \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
-            -H 'Content-type: application/json; charset=utf-8' \
-            --data "{
-              \"channel\": \"${SLACK_CHANNEL_ID}\",
-              \"text\": \"🛡️ *Trivy: HIGH/CRITICAL in ${{ github.repository }}* (ref \`${{ github.ref_name }}\`)\n🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
-            }" || true
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"🛡️ *Trivy: HIGH/CRITICAL in ${{ github.repository }}* (ref \`${{ github.ref_name }}\`)\n🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
       - name: Fail if findings
         if: steps.gate.outcome == 'failure'
