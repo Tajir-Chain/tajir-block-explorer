@@ -149,14 +149,20 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # ── Step 3: Build Docker image (no push yet) ─────────────────────────────
+      - name: Set up Docker Buildx
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image
         if: steps.version.outputs.skip != 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
           load: true
           tags: ${{ steps.version.outputs.image_tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ steps.version.outputs.new_tag }}
 
