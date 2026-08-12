@@ -33,6 +33,38 @@ jobs:
         # --no-cache ensures prior vulnerable node_modules layers cannot survive
         run: docker build --no-cache -t "$IMAGE" .
 
+      - name: Inventory vulnerable package.json in image (debug)
+        run: |
+          docker run --rm --user root --entrypoint node "$IMAGE" -e '
+            const fs=require("fs");const path=require("path");
+            const bad={
+              tar:v=>v&&(v.startsWith("6.")||v.startsWith("7.4.")),
+              "brace-expansion":v=>v==="2.0.1"||v==="2.0.2",
+              glob:v=>v==="10.4.5",
+              "ip-address":v=>v&&v.startsWith("9."),
+              sigstore:v=>v&&(v.startsWith("3.")||v.startsWith("2.")),
+              minimatch:v=>v==="3.0.4"||v==="3.1.2",
+            };
+            const hits=[];
+            (function walk(d){
+              let ents; try{ents=fs.readdirSync(d,{withFileTypes:true})}catch{return}
+              for (const e of ents){
+                const p=path.join(d,e.name);
+                if(e.isDirectory()) walk(p);
+                else if(e.name==="package.json"){
+                  try{
+                    const j=JSON.parse(fs.readFileSync(p,"utf8"));
+                    if(bad[j.name]&&bad[j.name](j.version)) hits.push(j.name+"@"+j.version+" "+p);
+                  }catch{}
+                } else if(e.name==="yarn.lock"||e.name==="package-lock.json"){
+                  hits.push("LOCKFILE "+p);
+                }
+              }
+            })("/app");
+            console.log(hits.length?hits.join("\n"):"inventory: clean");
+            if(hits.length) process.exit(1);
+          '
+
       - name: Install Trivy
         run: |
           TRIVY_VERSION=0.71.0

@@ -18,10 +18,12 @@ COPY toolkit/utils ./toolkit/utils
 COPY toolkit/components/forms/validators/url.ts ./toolkit/components/forms/validators/url.ts
 RUN apk add git
 COPY ./deploy/scripts/force-patched-deps.js /force-patched-deps.js
+COPY ./deploy/scripts/assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
 COPY ./deploy/security-overrides /security-overrides
 ENV SECURITY_OVERRIDES_DIR=/security-overrides
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /app/node_modules --fail --delete-unused
+    node /force-patched-deps.js /app/node_modules --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js /app
 
 
 ### FEATURE REPORTER
@@ -118,11 +120,13 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN yarn build
 
 # Re-apply security patches on the Next.js standalone tree (file tracing can
-# re-introduce nested copies that yarn resolutions miss).
+# re-introduce nested copies / lockfiles that yarn resolutions miss).
 COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+COPY --from=deps /assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
 COPY --from=deps /security-overrides /security-overrides
 ENV SECURITY_OVERRIDES_DIR=/security-overrides
-RUN node /force-patched-deps.js /app/.next/standalone --fail --delete-unused
+RUN node /force-patched-deps.js /app/.next/standalone --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js /app/.next/standalone
 
 
 ### FEATURE REPORTER
@@ -142,6 +146,7 @@ RUN cd ./deploy/tools/envs-validator && yarn build
 # Copy dependencies and source code
 COPY --from=deps /favicon-generator/node_modules ./deploy/tools/favicon-generator/node_modules
 RUN node /force-patched-deps.js ./deploy/tools/favicon-generator --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js ./deploy/tools/favicon-generator && \
     rm -f ./deploy/tools/favicon-generator/yarn.lock
 
 
@@ -149,6 +154,7 @@ RUN node /force-patched-deps.js ./deploy/tools/favicon-generator --fail --delete
 # Copy dependencies and source code
 COPY --from=deps /sitemap-generator/node_modules ./deploy/tools/sitemap-generator/node_modules
 RUN node /force-patched-deps.js ./deploy/tools/sitemap-generator --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js ./deploy/tools/sitemap-generator && \
     rm -f ./deploy/tools/sitemap-generator/yarn.lock
 
 ### MULTICHAIN CONFIG GENERATOR
@@ -235,14 +241,17 @@ COPY ./configs/envs ./configs/envs
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Final image scrub: patch or delete any CRITICAL/HIGH packages that still slipped
-# into standalone / favicon / sitemap after all COPY layers. Must run as root.
+# Final image scrub: Trivy reads every package.json AND nested yarn.lock inside
+# the image. Delete lockfiles, replace/delete vulnerable pkgs, stamp Next compiled.
 COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+COPY --from=deps /assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
 COPY --from=deps /security-overrides /security-overrides
 ENV SECURITY_OVERRIDES_DIR=/security-overrides
 RUN node /force-patched-deps.js /app --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js /app && \
     find /app -name 'yarn.lock' -delete && \
     find /app -name 'package-lock.json' -delete && \
+    find /app -name 'npm-shrinkwrap.json' -delete && \
     chown -R nextjs:nodejs /app
 
 ENTRYPOINT ["./entrypoint.sh"]
