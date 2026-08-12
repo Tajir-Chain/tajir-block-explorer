@@ -182,6 +182,24 @@ FROM node:22.14.0-alpine AS runner
 # node:22.14.0-alpine snapshot; `apk add --upgrade` only touches the named pkgs.
 RUN apk --no-cache upgrade && apk add --no-cache bash curl jq unzip
 
+# Node base images ship a global `npm` with nested vulnerable deps
+# (/usr/local/lib/node_modules/npm/...). Production only needs `node` + our app
+# trees (favicon/sitemap use baked-in tool node_modules — no runtime yarn/npm).
+RUN rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx \
+      /usr/local/bin/corepack \
+      /usr/local/bin/yarn \
+      /usr/local/bin/yarnpkg \
+    && (rm -rf /opt/yarn* /usr/local/share/.cache/yarn 2>/dev/null || true)
+
+COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+COPY --from=deps /assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
+COPY --from=deps /security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
+
 ### APP
 WORKDIR /app
 
@@ -241,17 +259,24 @@ COPY ./configs/envs ./configs/envs
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Final image scrub: Trivy reads every package.json AND nested yarn.lock inside
-# the image. Delete lockfiles, replace/delete vulnerable pkgs, stamp Next compiled.
-COPY --from=deps /force-patched-deps.js /force-patched-deps.js
-COPY --from=deps /assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
-COPY --from=deps /security-overrides /security-overrides
-ENV SECURITY_OVERRIDES_DIR=/security-overrides
+# Final image scrub: Trivy reads every package.json AND nested lockfile under /app.
+# Re-drop global npm/yarn in case any COPY layer reintroduced paths (defensive).
 RUN node /force-patched-deps.js /app --fail --delete-unused && \
     node /assert-no-vuln-pkgs.js /app && \
     find /app -name 'yarn.lock' -delete && \
     find /app -name 'package-lock.json' -delete && \
     find /app -name 'npm-shrinkwrap.json' -delete && \
+    rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx \
+      /usr/local/bin/corepack \
+      /usr/local/bin/yarn \
+      /usr/local/bin/yarnpkg \
+      /force-patched-deps.js \
+      /assert-no-vuln-pkgs.js \
+      /security-overrides && \
     chown -R nextjs:nodejs /app
 
 ENTRYPOINT ["./entrypoint.sh"]

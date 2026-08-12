@@ -79,3 +79,7 @@ why it was reverted in the baseline; it's a real code edit, not just a version b
 - yarn-classic: a `resolution` whose version is a different major than what a consumer
   requests makes the lockfile non-idempotent → `--frozen-lockfile` fails → build breaks.
   That's why cluster 2 was removed. Scope pins (`consumer/**/pkg`) instead of global-pinning.
+- **Base-image npm**: if `/app` inventory is clean but Trivy still fails, the findings are
+  usually `/usr/local/lib/node_modules/npm/...`. The runner stage removes global npm/corepack/yarn;
+  do not rely on runtime `yarn install` in favicon/sitemap (that reintroduces vulns).
+- Image scan is ground truth — `trivy fs yarn.lock` undercounts.
