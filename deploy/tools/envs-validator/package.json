@@ -14,5 +14,10 @@
     "dotenv-cli": "^7.2.1",
     "typescript": "5.4.2",
     "vite": "6.4.1"
+  },
+  "resolutions": {
+    "picomatch": "4.0.4",
+    "postcss": "8.5.18"
   }
 }
+
