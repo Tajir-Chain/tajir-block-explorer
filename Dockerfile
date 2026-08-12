@@ -17,51 +17,60 @@ COPY toolkit/theme ./toolkit/theme
 COPY toolkit/utils ./toolkit/utils
 COPY toolkit/components/forms/validators/url.ts ./toolkit/components/forms/validators/url.ts
 RUN apk add git
-RUN yarn --frozen-lockfile --network-timeout 100000
+COPY ./deploy/scripts/force-patched-deps.js /force-patched-deps.js
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /app/node_modules
 
 
 ### FEATURE REPORTER
 # Install dependencies
 WORKDIR /feature-reporter
 COPY ./deploy/tools/feature-reporter/package.json ./deploy/tools/feature-reporter/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /feature-reporter/node_modules
 
 
 ### ENV VARIABLES CHECKER
 # Install dependencies
 WORKDIR /envs-validator
 COPY ./deploy/tools/envs-validator/package.json ./deploy/tools/envs-validator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /envs-validator/node_modules
 
 ### FAVICON GENERATOR
 # Install dependencies
 WORKDIR /favicon-generator
 COPY ./deploy/tools/favicon-generator/package.json ./deploy/tools/favicon-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /favicon-generator/node_modules
 
 ### SITEMAP GENERATOR
 # Install dependencies
 WORKDIR /sitemap-generator
 COPY ./deploy/tools/sitemap-generator/package.json ./deploy/tools/sitemap-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /sitemap-generator/node_modules
 
 ### MULTICHAIN CONFIG GENERATOR
 # Install dependencies
 WORKDIR /multichain-config-generator
 COPY ./deploy/tools/multichain-config-generator/package.json ./deploy/tools/multichain-config-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /multichain-config-generator/node_modules
 
 ### ESSENTIAL DAPPS CHAINS CONFIG GENERATOR
 # Install dependencies
 WORKDIR /essential-dapps-chains-config-generator
 COPY ./deploy/tools/essential-dapps-chains-config-generator/package.json ./deploy/tools/essential-dapps-chains-config-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /essential-dapps-chains-config-generator/node_modules
 
 ### llms.txt GENERATOR
 # Install dependencies
 WORKDIR /llms-txt-generator
 COPY ./deploy/tools/llms-txt-generator/package.json ./deploy/tools/llms-txt-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /llms-txt-generator/node_modules
 
 
 # *****************************
@@ -106,6 +115,11 @@ RUN mkdir -p ./public/monaco && \
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN yarn build
 
+# Re-apply security patches on the Next.js standalone tree (file tracing can
+# re-introduce nested copies that yarn resolutions miss).
+COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+RUN node /force-patched-deps.js /app/.next/standalone/node_modules
+
 
 ### FEATURE REPORTER
 # Copy dependencies and source code, then build
@@ -123,11 +137,15 @@ RUN cd ./deploy/tools/envs-validator && yarn build
 ### FAVICON GENERATOR
 # Copy dependencies and source code
 COPY --from=deps /favicon-generator/node_modules ./deploy/tools/favicon-generator/node_modules
+RUN node /force-patched-deps.js ./deploy/tools/favicon-generator/node_modules && \
+    rm -f ./deploy/tools/favicon-generator/yarn.lock
 
 
 ### SITEMAP GENERATOR
 # Copy dependencies and source code
 COPY --from=deps /sitemap-generator/node_modules ./deploy/tools/sitemap-generator/node_modules
+RUN node /force-patched-deps.js ./deploy/tools/sitemap-generator/node_modules && \
+    rm -f ./deploy/tools/sitemap-generator/yarn.lock
 
 ### MULTICHAIN CONFIG GENERATOR
 # Copy dependencies and source code, then build

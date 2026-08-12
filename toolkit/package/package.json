@@ -68,7 +68,10 @@
     "access": "public"
   },
   "resolutions": {
-    "vite-plugin-dts/**/brace-expansion": "2.0.2",
-    "vite-plugin-svgr/**/js-yaml": "4.1.1"
+    "brace-expansion": "2.1.4",
+    "minimatch": "9.0.7",
+    "picomatch": "4.0.4",
+    "js-yaml": "4.3.1"
   }
 }
+
