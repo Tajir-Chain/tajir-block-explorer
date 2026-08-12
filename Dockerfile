@@ -18,8 +18,10 @@ COPY toolkit/utils ./toolkit/utils
 COPY toolkit/components/forms/validators/url.ts ./toolkit/components/forms/validators/url.ts
 RUN apk add git
 COPY ./deploy/scripts/force-patched-deps.js /force-patched-deps.js
+COPY ./deploy/security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /app/node_modules
+    node /force-patched-deps.js /app/node_modules --fail --delete-unused
 
 
 ### FEATURE REPORTER
@@ -27,7 +29,7 @@ RUN yarn --frozen-lockfile --network-timeout 100000 && \
 WORKDIR /feature-reporter
 COPY ./deploy/tools/feature-reporter/package.json ./deploy/tools/feature-reporter/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /feature-reporter/node_modules
+    node /force-patched-deps.js /feature-reporter/node_modules --fail --delete-unused
 
 
 ### ENV VARIABLES CHECKER
@@ -35,42 +37,42 @@ RUN yarn --frozen-lockfile --network-timeout 100000 && \
 WORKDIR /envs-validator
 COPY ./deploy/tools/envs-validator/package.json ./deploy/tools/envs-validator/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /envs-validator/node_modules
+    node /force-patched-deps.js /envs-validator/node_modules --fail --delete-unused
 
 ### FAVICON GENERATOR
 # Install dependencies
 WORKDIR /favicon-generator
 COPY ./deploy/tools/favicon-generator/package.json ./deploy/tools/favicon-generator/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /favicon-generator/node_modules
+    node /force-patched-deps.js /favicon-generator/node_modules --fail --delete-unused
 
 ### SITEMAP GENERATOR
 # Install dependencies
 WORKDIR /sitemap-generator
 COPY ./deploy/tools/sitemap-generator/package.json ./deploy/tools/sitemap-generator/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /sitemap-generator/node_modules
+    node /force-patched-deps.js /sitemap-generator/node_modules --fail --delete-unused
 
 ### MULTICHAIN CONFIG GENERATOR
 # Install dependencies
 WORKDIR /multichain-config-generator
 COPY ./deploy/tools/multichain-config-generator/package.json ./deploy/tools/multichain-config-generator/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /multichain-config-generator/node_modules
+    node /force-patched-deps.js /multichain-config-generator/node_modules --fail --delete-unused
 
 ### ESSENTIAL DAPPS CHAINS CONFIG GENERATOR
 # Install dependencies
 WORKDIR /essential-dapps-chains-config-generator
 COPY ./deploy/tools/essential-dapps-chains-config-generator/package.json ./deploy/tools/essential-dapps-chains-config-generator/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /essential-dapps-chains-config-generator/node_modules
+    node /force-patched-deps.js /essential-dapps-chains-config-generator/node_modules --fail --delete-unused
 
 ### llms.txt GENERATOR
 # Install dependencies
 WORKDIR /llms-txt-generator
 COPY ./deploy/tools/llms-txt-generator/package.json ./deploy/tools/llms-txt-generator/yarn.lock ./
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
-    node /force-patched-deps.js /llms-txt-generator/node_modules
+    node /force-patched-deps.js /llms-txt-generator/node_modules --fail --delete-unused
 
 
 # *****************************
@@ -118,7 +120,9 @@ RUN yarn build
 # Re-apply security patches on the Next.js standalone tree (file tracing can
 # re-introduce nested copies that yarn resolutions miss).
 COPY --from=deps /force-patched-deps.js /force-patched-deps.js
-RUN node /force-patched-deps.js /app/.next/standalone/node_modules
+COPY --from=deps /security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
+RUN node /force-patched-deps.js /app/.next/standalone --fail --delete-unused
 
 
 ### FEATURE REPORTER
@@ -137,14 +141,14 @@ RUN cd ./deploy/tools/envs-validator && yarn build
 ### FAVICON GENERATOR
 # Copy dependencies and source code
 COPY --from=deps /favicon-generator/node_modules ./deploy/tools/favicon-generator/node_modules
-RUN node /force-patched-deps.js ./deploy/tools/favicon-generator/node_modules && \
+RUN node /force-patched-deps.js ./deploy/tools/favicon-generator --fail --delete-unused && \
     rm -f ./deploy/tools/favicon-generator/yarn.lock
 
 
 ### SITEMAP GENERATOR
 # Copy dependencies and source code
 COPY --from=deps /sitemap-generator/node_modules ./deploy/tools/sitemap-generator/node_modules
-RUN node /force-patched-deps.js ./deploy/tools/sitemap-generator/node_modules && \
+RUN node /force-patched-deps.js ./deploy/tools/sitemap-generator --fail --delete-unused && \
     rm -f ./deploy/tools/sitemap-generator/yarn.lock
 
 ### MULTICHAIN CONFIG GENERATOR
@@ -230,6 +234,16 @@ COPY ./configs/envs ./configs/envs
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Final image scrub: patch or delete any CRITICAL/HIGH packages that still slipped
+# into standalone / favicon / sitemap after all COPY layers. Must run as root.
+COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+COPY --from=deps /security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
+RUN node /force-patched-deps.js /app --fail --delete-unused && \
+    find /app -name 'yarn.lock' -delete && \
+    find /app -name 'package-lock.json' -delete && \
+    chown -R nextjs:nodejs /app
 
 ENTRYPOINT ["./entrypoint.sh"]
 

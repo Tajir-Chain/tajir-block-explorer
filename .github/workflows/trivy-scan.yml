@@ -30,7 +30,8 @@ jobs:
           docker system prune -af || true
 
       - name: Build image
-        run: docker build -t "$IMAGE" .
+        # --no-cache ensures prior vulnerable node_modules layers cannot survive
+        run: docker build --no-cache -t "$IMAGE" .
 
       - name: Install Trivy
         run: |
