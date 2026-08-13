@@ -135,13 +135,14 @@ jobs:
 
       # ══ TEMP (remove after canary QA) ═══════════════════════════════════════
       # Push the built image to DockerHub for block-explorer canary functionality
-      # testing — ONLY when triggered manually (workflow_dispatch) AND the Trivy
-      # gate PASSED (steps.gate.outcome == 'success'), so a vulnerable image is
-      # never published. This workflow has NO devnet/testnet/mainnet trigger, so it
-      # can never publish an env tag. DELETE this step + the canary_tag input once
-      # QA is done.
+      # testing. Fires on a push to `security/canary-push` (already covered by this
+      # workflow's push: security/** trigger) OR a manual workflow_dispatch — and
+      # ONLY when the Trivy gate PASSED, so a vulnerable image is never published.
+      # This workflow has NO devnet/testnet/mainnet trigger, so it can never publish
+      # an env tag. Default tag `canary`. DELETE this step + the canary_tag input
+      # (and the security/canary-push branch) once QA is done.
       - name: TEMP — push canary image to DockerHub (only if scan clean)
-        if: github.event_name == 'workflow_dispatch' && steps.gate.outcome == 'success'
+        if: steps.gate.outcome == 'success' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'security/canary-push')
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
