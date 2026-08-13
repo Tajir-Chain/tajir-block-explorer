@@ -11,6 +11,11 @@ on:
   push:
     branches: [main, master, security/**]
   workflow_dispatch:
+    inputs:
+      canary_tag:
+        description: "TEMP: DockerHub tag to push for canary QA (default 'canary')"
+        default: "canary"
+        required: false
 
 permissions:
   contents: read
@@ -127,6 +132,26 @@ jobs:
         continue-on-error: true
         run: |
           trivy image --severity HIGH,CRITICAL --scanners vuln --exit-code 1 "$IMAGE"
+
+      # ══ TEMP (remove after canary QA) ═══════════════════════════════════════
+      # Push the built image to DockerHub for block-explorer canary functionality
+      # testing — ONLY when triggered manually (workflow_dispatch) AND the Trivy
+      # gate PASSED (steps.gate.outcome == 'success'), so a vulnerable image is
+      # never published. This workflow has NO devnet/testnet/mainnet trigger, so it
+      # can never publish an env tag. DELETE this step + the canary_tag input once
+      # QA is done.
+      - name: TEMP — push canary image to DockerHub (only if scan clean)
+        if: github.event_name == 'workflow_dispatch' && steps.gate.outcome == 'success'
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          CANARY_TAG: ${{ inputs.canary_tag }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          REF="tajirchain/tajir-block-explorer:${CANARY_TAG:-canary}"
+          docker tag "$IMAGE" "$REF"
+          docker push "$REF"
+          echo "Pushed $REF  (TEMP canary — remove this workflow step after QA)"
 
       - name: Notify Slack on findings
         if: steps.gate.outcome == 'failure' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
