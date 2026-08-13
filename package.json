@@ -223,7 +223,6 @@
     "postcss": "8.5.18",
     "sharp": "0.35.3",
     "ws": "8.21.3",
-    "brace-expansion": "2.1.4",
     "minimatch": "9.0.7",
     "picomatch": "4.0.4",
     "glob": "10.5.0",
