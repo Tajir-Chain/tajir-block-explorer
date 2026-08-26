@@ -17,51 +17,64 @@ COPY toolkit/theme ./toolkit/theme
 COPY toolkit/utils ./toolkit/utils
 COPY toolkit/components/forms/validators/url.ts ./toolkit/components/forms/validators/url.ts
 RUN apk add git
-RUN yarn --frozen-lockfile --network-timeout 100000
+COPY ./deploy/scripts/force-patched-deps.js /force-patched-deps.js
+COPY ./deploy/scripts/assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
+COPY ./deploy/security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /app/node_modules --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js /app
 
 
 ### FEATURE REPORTER
 # Install dependencies
 WORKDIR /feature-reporter
 COPY ./deploy/tools/feature-reporter/package.json ./deploy/tools/feature-reporter/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /feature-reporter/node_modules --fail --delete-unused
 
 
 ### ENV VARIABLES CHECKER
 # Install dependencies
 WORKDIR /envs-validator
 COPY ./deploy/tools/envs-validator/package.json ./deploy/tools/envs-validator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /envs-validator/node_modules --fail --delete-unused
 
 ### FAVICON GENERATOR
 # Install dependencies
 WORKDIR /favicon-generator
 COPY ./deploy/tools/favicon-generator/package.json ./deploy/tools/favicon-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /favicon-generator/node_modules --fail --delete-unused
 
 ### SITEMAP GENERATOR
 # Install dependencies
 WORKDIR /sitemap-generator
 COPY ./deploy/tools/sitemap-generator/package.json ./deploy/tools/sitemap-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /sitemap-generator/node_modules --fail --delete-unused
 
 ### MULTICHAIN CONFIG GENERATOR
 # Install dependencies
 WORKDIR /multichain-config-generator
 COPY ./deploy/tools/multichain-config-generator/package.json ./deploy/tools/multichain-config-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /multichain-config-generator/node_modules --fail --delete-unused
 
 ### ESSENTIAL DAPPS CHAINS CONFIG GENERATOR
 # Install dependencies
 WORKDIR /essential-dapps-chains-config-generator
-COPY ./deploy/tools/essential-dapps-chains-config-generator/package.json ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+COPY ./deploy/tools/essential-dapps-chains-config-generator/package.json ./deploy/tools/essential-dapps-chains-config-generator/yarn.lock ./
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /essential-dapps-chains-config-generator/node_modules --fail --delete-unused
 
 ### llms.txt GENERATOR
 # Install dependencies
 WORKDIR /llms-txt-generator
 COPY ./deploy/tools/llms-txt-generator/package.json ./deploy/tools/llms-txt-generator/yarn.lock ./
-RUN yarn --frozen-lockfile --network-timeout 100000
+RUN yarn --frozen-lockfile --network-timeout 100000 && \
+    node /force-patched-deps.js /llms-txt-generator/node_modules --fail --delete-unused
 
 
 # *****************************
@@ -106,6 +119,15 @@ RUN mkdir -p ./public/monaco && \
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN yarn build
 
+# Re-apply security patches on the Next.js standalone tree (file tracing can
+# re-introduce nested copies / lockfiles that yarn resolutions miss).
+COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+COPY --from=deps /assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
+COPY --from=deps /security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
+RUN node /force-patched-deps.js /app/.next/standalone --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js /app/.next/standalone
+
 
 ### FEATURE REPORTER
 # Copy dependencies and source code, then build
@@ -123,11 +145,17 @@ RUN cd ./deploy/tools/envs-validator && yarn build
 ### FAVICON GENERATOR
 # Copy dependencies and source code
 COPY --from=deps /favicon-generator/node_modules ./deploy/tools/favicon-generator/node_modules
+RUN node /force-patched-deps.js ./deploy/tools/favicon-generator --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js ./deploy/tools/favicon-generator && \
+    rm -f ./deploy/tools/favicon-generator/yarn.lock
 
 
 ### SITEMAP GENERATOR
 # Copy dependencies and source code
 COPY --from=deps /sitemap-generator/node_modules ./deploy/tools/sitemap-generator/node_modules
+RUN node /force-patched-deps.js ./deploy/tools/sitemap-generator --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js ./deploy/tools/sitemap-generator && \
+    rm -f ./deploy/tools/sitemap-generator/yarn.lock
 
 ### MULTICHAIN CONFIG GENERATOR
 # Copy dependencies and source code, then build
@@ -150,7 +178,27 @@ RUN cd ./deploy/tools/llms-txt-generator && yarn build
 # *****************************
 # Production image, copy all the files and run next
 FROM node:22.14.0-alpine AS runner
-RUN apk add --no-cache --upgrade bash curl jq unzip
+# apk upgrade patches base-layer OS packages (e.g. musl) baked into the pinned
+# node:22.14.0-alpine snapshot; `apk add --upgrade` only touches the named pkgs.
+RUN apk --no-cache upgrade && apk add --no-cache bash curl jq unzip
+
+# Node base images ship a global `npm` with nested vulnerable deps
+# (/usr/local/lib/node_modules/npm/...). Production only needs `node` + our app
+# trees (favicon/sitemap use baked-in tool node_modules — no runtime yarn/npm).
+RUN rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx \
+      /usr/local/bin/corepack \
+      /usr/local/bin/yarn \
+      /usr/local/bin/yarnpkg \
+    && (rm -rf /opt/yarn* /usr/local/share/.cache/yarn 2>/dev/null || true)
+
+COPY --from=deps /force-patched-deps.js /force-patched-deps.js
+COPY --from=deps /assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
+COPY --from=deps /security-overrides /security-overrides
+ENV SECURITY_OVERRIDES_DIR=/security-overrides
 
 ### APP
 WORKDIR /app
@@ -210,6 +258,26 @@ COPY ./configs/envs ./configs/envs
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Final image scrub: Trivy reads every package.json AND nested lockfile under /app.
+# Re-drop global npm/yarn in case any COPY layer reintroduced paths (defensive).
+RUN node /force-patched-deps.js /app --fail --delete-unused && \
+    node /assert-no-vuln-pkgs.js /app && \
+    find /app -name 'yarn.lock' -delete && \
+    find /app -name 'package-lock.json' -delete && \
+    find /app -name 'npm-shrinkwrap.json' -delete && \
+    rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx \
+      /usr/local/bin/corepack \
+      /usr/local/bin/yarn \
+      /usr/local/bin/yarnpkg \
+      /force-patched-deps.js \
+      /assert-no-vuln-pkgs.js \
+      /security-overrides && \
+    chown -R nextjs:nodejs /app
 
 ENTRYPOINT ["./entrypoint.sh"]
 

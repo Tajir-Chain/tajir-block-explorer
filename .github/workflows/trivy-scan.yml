@@ -1,0 +1,142 @@
+name: Trivy image scan
+
+# Builds this repo's image and scans it for HIGH/CRITICAL CVEs. Full findings go
+# to the run's Job Summary (readable in the Actions tab). Fails the job on any
+# HIGH/CRITICAL (the gate) and pings Slack via the MT bot on push/manual runs.
+#
+# Requires repo secrets: SLACK_BOT_TOKEN (xoxb-...), SLACK_CHANNEL_ID (C0...).
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, security/**]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: scan-target:local
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
+          docker system prune -af || true
+
+      - name: Build image
+        # --no-cache ensures prior vulnerable node_modules layers cannot survive
+        run: docker build --no-cache -t "$IMAGE" .
+
+      - name: Install Trivy
+        run: |
+          TRIVY_VERSION=0.71.0
+          wget -qO /tmp/trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          sudo tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+          trivy --version
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      - name: Inventory vulnerable package.json in image (debug)
+        run: |
+          docker run --rm --user root --entrypoint node "$IMAGE" -e '
+            const fs=require("fs");const path=require("path");
+            const bad={
+              tar:v=>v&&(v.startsWith("6.")||v.startsWith("7.4.")),
+              "brace-expansion":v=>v==="2.0.1"||v==="2.0.2",
+              glob:v=>v==="10.4.5",
+              "ip-address":v=>v&&v.startsWith("9."),
+              sigstore:v=>v&&(v.startsWith("3.")||v.startsWith("2.")),
+              minimatch:v=>v==="3.0.4"||v==="3.1.2",
+            };
+            const hits=[];
+            function walk(d){
+              let ents; try{ents=fs.readdirSync(d,{withFileTypes:true})}catch{return}
+              for (const e of ents){
+                const p=path.join(d,e.name);
+                if(e.isDirectory()) walk(p);
+                else if(e.name==="package.json"){
+                  try{
+                    const j=JSON.parse(fs.readFileSync(p,"utf8"));
+                    if(bad[j.name]&&bad[j.name](j.version)) hits.push(j.name+"@"+j.version+" "+p);
+                  }catch{}
+                } else if(e.name==="yarn.lock"||e.name==="package-lock.json"){
+                  hits.push("LOCKFILE "+p);
+                }
+              }
+            }
+            // App tree AND Node global npm tree (base-image findings lived here)
+            for (const root of ["/app","/usr/local/lib/node_modules"]) walk(root);
+            console.log(hits.length?hits.join("\n"):"inventory: clean");
+            if(hits.length) process.exit(1);
+          '
+
+      - name: Trivy scan (report)
+        run: |
+          trivy image --severity HIGH,CRITICAL --scanners vuln \
+            --format table --output trivy-report.txt --exit-code 0 "$IMAGE"
+
+      - name: Trivy JSON paths for remaining findings
+        if: always()
+        run: |
+          trivy image --severity HIGH,CRITICAL --scanners vuln \
+            --format json --output /tmp/trivy.json "$IMAGE" || true
+          node -e '
+            const fs=require("fs");
+            let d; try{d=JSON.parse(fs.readFileSync("/tmp/trivy.json","utf8"))}catch{console.log("no json"); process.exit(0)}
+            for (const r of d.Results||[]) {
+              for (const v of r.Vulnerabilities||[]) {
+                console.log([v.Severity,v.PkgName,v.InstalledVersion,v.VulnerabilityID,v.PkgPath||r.Target].join("\t"));
+              }
+            }
+          '
+
+      - name: Publish findings to Job Summary
+        if: always()
+        run: |
+          {
+            echo "## Trivy HIGH/CRITICAL — ${{ github.repository }} @ ${GITHUB_SHA::7}"
+            echo '```'
+            cat trivy-report.txt || echo "(no report produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          if-no-files-found: ignore
+
+      # Gate: re-scan with exit-code 1. continue-on-error so the notify + explicit
+      # fail below still run. DB is cached from the report step, so this is fast.
+      - name: Trivy gate
+        id: gate
+        continue-on-error: true
+        run: |
+          trivy image --severity HIGH,CRITICAL --scanners vuln --exit-code 1 "$IMAGE"
+
+      - name: Notify Slack on findings
+        if: steps.gate.outcome == 'failure' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"🛡️ *Trivy: HIGH/CRITICAL in ${{ github.repository }}* (ref \`${{ github.ref_name }}\`)\n🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
+
+      - name: Fail if findings
+        if: steps.gate.outcome == 'failure'
+        run: |
+          echo "HIGH/CRITICAL vulnerabilities present — see Job Summary." >&2
+          exit 1

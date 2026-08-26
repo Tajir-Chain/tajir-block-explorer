@@ -173,11 +173,15 @@ jobs:
       # ── Step 5: Push Docker image (only if git tag succeeded) ───────────────
       - name: Push Docker image to DockerHub
         if: steps.version.outputs.skip != 'true'
+        id: push
         run: |
           echo "${{ steps.version.outputs.image_tags }}" | tr ',' '\n' | while read tag; do
             echo "Pushing $tag ..."
             docker push "$tag"
           done
+          FIRST_TAG=$(echo "${{ steps.version.outputs.image_tags }}" | tr ',' '\n' | head -1)
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$FIRST_TAG" | cut -d'@' -f2)
+          echo "image_digest=$DIGEST" >> $GITHUB_OUTPUT
 
       # ── Step 6: Create GitHub Release (mainnet only) ────────────────────────
       - name: Create GitHub Release
@@ -194,13 +198,15 @@ jobs:
         run: |
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\": \"🚀 <!channel> *Deployment Successful*\n\n\
+            \"text\": \"🐳 <!channel> *Docker Image Published*\n\n\
             🧾 *Repo:* ${{ github.repository }}\n\
             🏷️ *Git Tag:* ${{ steps.version.outputs.new_tag }}\n\
             🐳 *Docker Image:* ${{ steps.version.outputs.image_tags }}\n\
             🌿 *Branch:* ${{ github.base_ref }}\n\
             👤 *Triggered by:* ${{ github.actor }}\n\
-            🔗 *Docker Hub:* https://hub.docker.com/r/${{ env.DOCKERHUB_IMAGE }}\"
+            🔗 *Docker Hub:* https://hub.docker.com/r/${{ env.DOCKERHUB_IMAGE }}\n\
+            ✅ *Image pushed to DockerHub successfully. Deployment not triggered.*\n\
+            🔑 *Image SHA:* ${{ steps.push.outputs.image_digest }}\"
             }" \
             ${{ secrets.SLACK_WEBHOOK_URL }}
 

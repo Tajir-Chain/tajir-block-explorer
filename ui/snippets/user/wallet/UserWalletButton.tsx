@@ -2,6 +2,7 @@ import type { ButtonProps } from '@chakra-ui/react';
 import { Box, HStack } from '@chakra-ui/react';
 import React from 'react';
 
+import appConfig from 'configs/app';
 import useIsMobile from 'lib/hooks/useIsMobile';
 import shortenString from 'lib/shortenString';
 import { Button } from 'toolkit/chakra/button';
@@ -39,7 +40,7 @@ const UserWalletButton = ({ size, variant, isPending, isAutoConnectDisabled, add
 
   return (
     <Tooltip
-      content="Connect your wallet to Tajir Testnet for full-featured access"
+      content={`Connect your wallet to ${appConfig.chain.name || 'tajir chain' } for full-featured access`}
       disabled={ isMobile || Boolean(address) }
       openDelay={ 500 }
       disableOnMobile
