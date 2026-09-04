@@ -20,6 +20,7 @@
   "resolutions": {
     "sharp": "0.35.3",
     "serialize-javascript": "7.0.7",
-    "picomatch": "2.3.2"
+    "picomatch": "2.3.2",
+    "browserslist": ">=4.28.7"
   }
 }

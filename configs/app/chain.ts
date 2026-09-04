@@ -16,6 +16,9 @@ const verificationType: NetworkVerificationType = (() => {
   if (rollupType === 'zkEvm') {
     return 'sequencing';
   }
+  if (rollupType === 'aggLayer') {
+    return 'sequencing';
+  }
   return getEnvValue('NEXT_PUBLIC_NETWORK_VERIFICATION_TYPE') as NetworkVerificationTypeEnvs || 'mining';
 })();
 

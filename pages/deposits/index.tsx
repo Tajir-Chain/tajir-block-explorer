@@ -25,6 +25,10 @@ const Deposits = dynamic(() => {
     return import('ui/pages/ZkEvmL2Deposits');
   }
 
+  if (rollupFeature.isEnabled && rollupFeature.type === 'aggLayer') {
+    return import('ui/pages/ZkEvmL2Deposits');
+  }
+
   if (rollupFeature.isEnabled && rollupFeature.type === 'scroll') {
     return import('ui/pages/ScrollL2Deposits');
   }
