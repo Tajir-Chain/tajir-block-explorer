@@ -35,6 +35,7 @@ const BAD = {
   },
   sharp: (v) => lt(v, '0.35.0'),
   'serialize-javascript': (v) => lt(v, '7.0.3'),
+  browserslist: (v) => lt(v, '4.28.7'),
   picomatch: (v) => {
     if (v.startsWith('2.')) return lt(v, '2.3.2');
     if (v.startsWith('3.')) return lt(v, '3.0.2');
@@ -53,6 +54,7 @@ const FIX = {
   sharp: '0.35.3',
   'serialize-javascript': '7.0.7',
   picomatch: '4.0.4',
+  browserslist: '4.28.7',
 };
 
 const DELETE_ALWAYS = new Set([ 'tar', 'sigstore' ]);
