@@ -25,6 +25,10 @@ const Withdrawals = dynamic(() => {
     return import('ui/pages/ZkEvmL2Withdrawals');
   }
 
+  if (rollupFeature.isEnabled && rollupFeature.type === 'aggLayer') {
+    return import('ui/pages/ZkEvmL2Withdrawals');
+  }
+
   if (rollupFeature.isEnabled && rollupFeature.type === 'scroll') {
     return import('ui/pages/ScrollL2Withdrawals');
   }

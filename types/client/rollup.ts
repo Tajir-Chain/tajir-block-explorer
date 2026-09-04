@@ -7,6 +7,7 @@ export const ROLLUP_TYPES = [
   'zkEvm',
   'zkSync',
   'scroll',
+  'aggLayer',
 ] as const;
 
 export type RollupType = ArrayElement<typeof ROLLUP_TYPES>;

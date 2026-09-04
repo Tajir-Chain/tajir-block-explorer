@@ -42,6 +42,7 @@ const PACKAGES = [
   'postcss',
   'js-yaml',
   'immutable',
+  'browserslist',
 ];
 
 // Runtime-unnecessary in the shipped explorer image — safe to delete if patching fails.
@@ -107,6 +108,8 @@ function isVulnerable(name, version) {
       if (version.startsWith('3.')) return lt(version, '3.15.1');
       if (version.startsWith('4.')) return lt(version, '4.3.1');
       return false;
+    case 'browserslist':
+      return lt(version, '4.28.7');
     case 'immutable':
       if (version.startsWith('3.')) return true;
       if (version.startsWith('4.')) return lt(version, '4.3.9');
@@ -153,6 +156,8 @@ function patchedVersion(name, version) {
       return '8.5.18';
     case 'js-yaml':
       return version.startsWith('3.') ? '3.15.1' : '4.3.1';
+    case 'browserslist':
+      return '4.28.7';
     case 'immutable':
       // 3.x has no patched line — jump to last 4.x security release
       if (version.startsWith('5.')) return '5.1.8';

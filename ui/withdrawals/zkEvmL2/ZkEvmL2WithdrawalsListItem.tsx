@@ -18,7 +18,7 @@ const rollupFeature = config.features.rollup;
 type Props = { item: ZkEvmL2WithdrawalsItem; isLoading?: boolean };
 
 const ZkEvmL2WithdrawalsListItem = ({ item, isLoading }: Props) => {
-  if (!rollupFeature.isEnabled || rollupFeature.type !== 'zkEvm') {
+  if (!rollupFeature.isEnabled || (rollupFeature.type !== 'zkEvm' && rollupFeature.type !== 'aggLayer')) {
     return null;
   }
 
