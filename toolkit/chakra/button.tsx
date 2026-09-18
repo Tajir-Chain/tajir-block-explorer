@@ -16,7 +16,18 @@ interface ButtonLoadingProps {
   loadingSkeleton?: boolean;
 }
 
-export interface ButtonProps extends ChakraButtonProps, ButtonLoadingProps {
+// Custom theme recipe variants (see toolkit/theme/recipes/button.recipe.ts).
+// Chakra typegen may omit these when types are stale (e.g. missing @esbuild/linux-x64).
+type ButtonVariant = ChakraButtonProps['variant']
+  | 'segmented'
+  | 'dropdown'
+  | 'header'
+  | 'hero'
+  | 'link'
+  | 'pagination';
+
+export interface ButtonProps extends Omit<ChakraButtonProps, 'variant'>, ButtonLoadingProps {
+  variant?: ButtonVariant;
   expanded?: boolean;
   selected?: boolean;
   highlighted?: boolean;
@@ -59,7 +70,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           { ...(loading ? { 'data-loading': true } : {}) }
           { ...(loadingSkeleton ? { 'data-loading-skeleton': true } : {}) }
           disabled={ !loadingSkeleton && (loading || disabled) }
-          { ...rest }
+          { ...rest as ChakraButtonProps }
         >
           { content }
         </ChakraButton>
@@ -80,12 +91,13 @@ export const ButtonGroup = React.forwardRef<HTMLDivElement, ButtonGroupProps>(
   },
 );
 
-export interface ButtonGroupRadioProps extends Omit<ChakraButtonGroupProps, 'children' | 'onChange'> {
+export interface ButtonGroupRadioProps extends Omit<ChakraButtonGroupProps, 'children' | 'onChange' | 'variant'> {
   children: Array<React.ReactElement<ButtonProps>>;
   onChange?: (value: string) => void;
   defaultValue?: string;
   loading?: boolean;
   equalWidth?: boolean;
+  variant?: ButtonVariant;
 }
 
 export const ButtonGroupRadio = React.forwardRef<HTMLDivElement, ButtonGroupRadioProps>(

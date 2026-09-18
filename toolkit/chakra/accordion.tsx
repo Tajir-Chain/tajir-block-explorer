@@ -4,10 +4,14 @@ import { scroller } from 'react-scroll';
 
 import IndicatorIcon from 'icons/arrows/east-mini.svg';
 
+// Custom theme recipe defines `faq` (see toolkit/theme/recipes/accordion.recipe.ts).
+// Default Chakra generated types may omit it when typegen is stale/failed.
+type AccordionVariant = Accordion.RootProps['variant'] | 'faq';
+
 interface AccordionItemTriggerProps extends Accordion.ItemTriggerProps {
   indicatorPlacement?: 'start' | 'end';
   noIndicator?: boolean;
-  variant?: Accordion.RootProps['variant'];
+  variant?: AccordionVariant;
 }
 
 export const AccordionItemTrigger = React.forwardRef<
@@ -16,9 +20,10 @@ export const AccordionItemTrigger = React.forwardRef<
 >(function AccordionItemTrigger(props, ref) {
   const { children, indicatorPlacement: indicatorPlacementProp, variant, noIndicator, ...rest } = props;
 
-  const indicatorPlacement = variant === 'faq' ? 'start' : (indicatorPlacementProp ?? 'end');
+  const isFaq = variant === 'faq';
+  const indicatorPlacement = isFaq ? 'start' : (indicatorPlacementProp ?? 'end');
 
-  const indicator = variant === 'faq' ? (
+  const indicator = isFaq ? (
     <Accordion.ItemIndicator
       asChild
       rotate="0deg"
@@ -75,7 +80,7 @@ export interface AccordionItemContentProps extends Accordion.ItemContentProps {}
 
 export const AccordionItemContent = React.forwardRef<
   HTMLDivElement,
-  AccordionItemContentProps
+  Accordion.ItemContentProps
 >(function AccordionItemContent(props, ref) {
   return (
     <Accordion.ItemContent>
@@ -84,9 +89,13 @@ export const AccordionItemContent = React.forwardRef<
   );
 });
 
-export const AccordionRoot = (props: Accordion.RootProps) => {
+type AccordionRootProps = Omit<Accordion.RootProps, 'variant'> & {
+  variant?: AccordionVariant;
+};
+
+export const AccordionRoot = (props: AccordionRootProps) => {
   const { multiple = true, ...rest } = props;
-  return <Accordion.Root multiple={ multiple } { ...rest }/>;
+  return <Accordion.Root multiple={ multiple } { ...rest as Accordion.RootProps }/>;
 };
 
 export const AccordionItem = Accordion.Item;

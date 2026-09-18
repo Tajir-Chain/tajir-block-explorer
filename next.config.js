@@ -16,14 +16,39 @@ const moduleExports = {
     'react-syntax-highlighter',
   ],
   reactStrictMode: true,
-  webpack(config) {
+  webpack(config, { isServer, webpack }) {
     config.module.rules.push(
       {
         test: /\.svg$/,
         use: [ '@svgr/webpack' ],
       },
     );
-    config.resolve.fallback = { fs: false, net: false, tls: false };
+
+    // Helia 8 / libp2p 3 import `node:stream` etc. Webpack does not handle the
+    // `node:` scheme in the client bundle (UnhandledSchemeError).
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+        resource.request = resource.request.replace(/^node:/, '');
+      }),
+    );
+
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      ...(!isServer ? {
+        stream: require.resolve('readable-stream'),
+        buffer: require.resolve('buffer/'),
+        crypto: false,
+        http: false,
+        https: false,
+        os: false,
+        path: false,
+        zlib: false,
+      } : {}),
+    };
+
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
 
     return config;
