@@ -30,7 +30,7 @@ const NetworkMenu = () => {
           color="yellow.500"
         >
           <IconSvg name="networks" boxSize="14px"/>
-          <span>Networks</span>
+          <span>Network</span>
           <IconSvg name="arrows/east-mini" boxSize={ 4 } transform="rotate(-90deg)"/>
         </Button>
       </PopoverTrigger>

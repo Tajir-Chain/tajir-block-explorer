@@ -1,43 +1,26 @@
-import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import type { FeaturedNetwork } from 'types/networks';
 import { NETWORK_GROUPS } from 'types/networks';
 
-import config from 'configs/app';
-import type { ResourceError } from 'lib/api/resources';
-import useFetch from 'lib/hooks/useFetch';
 import * as mixpanel from 'lib/mixpanel/index';
 import { useDisclosure } from 'toolkit/hooks/useDisclosure';
 
-
-const staticArray = [
-	{
-		title: "Mainnet",
-		url: "",
-		group: "Mainnets",
-		icon: ""
-	},
+const NETWORKS: Array<FeaturedNetwork> = [
   {
-		title: "Testnet",
-		url: "",
-		group: "Testnets",
-		icon: ""
-	},
-]
+    title: 'Mainnet',
+    url: 'https://tjrscan.com/',
+    group: 'Mainnets',
+  },
+  {
+    title: 'Testnet',
+    url: 'https://testnet.tjrscan.com/',
+    group: 'Testnets',
+  },
+];
 
 export default function useNetworkMenu() {
   const { open, onClose, onOpen, onOpenChange, onToggle } = useDisclosure();
-
-  const fetch = useFetch();
-  const { isPending, data } = useQuery<unknown, ResourceError<unknown>, Array<FeaturedNetwork>>({
-    queryKey: [ 'featured-network' ],
-    queryFn: async() => fetch(config.UI.featuredNetworks.items || '', undefined, { resource: 'featured-network' }),
-    enabled: Boolean(config.UI.featuredNetworks.items) && open,
-    staleTime: Infinity,
-  });
-
-  
 
   const handleOpenChange = React.useCallback((details: { open: boolean }) => {
     if (details.open) {
@@ -52,8 +35,8 @@ export default function useNetworkMenu() {
     onOpen,
     onToggle,
     onOpenChange: handleOpenChange,
-    isPending,
-    data: staticArray as Array<FeaturedNetwork>,
-    availableTabs: NETWORK_GROUPS.filter((tab) => data?.some(({ group }) => group === tab)),
-  }), [ open, onClose, onOpen, onToggle, handleOpenChange, data, isPending ]);
+    isPending: false,
+    data: NETWORKS,
+    availableTabs: NETWORK_GROUPS.filter((tab) => NETWORKS.some(({ group }) => group === tab)),
+  }), [ open, onClose, onOpen, onToggle, handleOpenChange ]);
 }

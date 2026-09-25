@@ -83,9 +83,9 @@ const TopBar = () => {
       borderColor="border.divider"
     >
       <Flex
-        py={{ base: 3, lg: 2 }}
+        py={{ base: 2.5, lg: 2 }}
         px={{ base: 3, lg: 6 }}
-        minH={{ lg: '76px' }}
+        minH={{ lg: '56px' }}
         m="0 auto"
         justifyContent="space-between"
         alignItems="center"
@@ -93,7 +93,7 @@ const TopBar = () => {
         position="relative"
       >
         <HStack gap={0} fontSize="xs" flex="1" minW={0}>
-          {Boolean(config.UI.featuredNetworks.items) && <NetworkMenu />}
+          <NetworkMenu />
           {!config.features.opSuperchain.isEnabled ? <TopBarStats /> : <div />}
         </HStack>
         <Flex
@@ -103,7 +103,7 @@ const TopBar = () => {
           alignItems="center"
           gap={2}
         >
-          <NetworkLogo logoHeight={{ base: '36px', lg: '60px' }}/>
+          <NetworkLogo logoHeight="40px"/>
           <TestnetBadge/>
         </Flex>
         <HStack
