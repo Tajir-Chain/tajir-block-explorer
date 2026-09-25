@@ -167,16 +167,8 @@ const NetworkMenuContent = ({ items, tabs }: Props) => {
   })();
 
   return (
-    <PopoverContent
-      w="200px"
-      maxH="unset"
-      bg={{ base: "#ffffff", _dark: "#101112" }}
-      boxShadow={{
-        base: "xl", 
-        _dark: "dark-lg", 
-      }}
-    >
-      <PopoverBody>{content}</PopoverBody>
+    <PopoverContent w="200px" maxH="unset">
+      <PopoverBody p={2}>{content}</PopoverBody>
     </PopoverContent>
   );
 };
