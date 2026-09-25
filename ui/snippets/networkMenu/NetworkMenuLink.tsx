@@ -3,8 +3,6 @@ import React from 'react';
 
 import type { FeaturedNetwork } from 'types/networks';
 
-import IconSvg from 'ui/shared/IconSvg';
-
 interface Props extends FeaturedNetwork {
   isActive?: boolean;
   isMobile?: boolean;
@@ -37,11 +35,9 @@ const NetworkMenuLink = ({ title, isActive: isActiveProp, isMobile, url }: Props
         alignItems="center"
         cursor={ isActive ? 'default' : 'pointer' }
         pointerEvents={ isActive ? 'none' : 'auto' }
-        borderRadius="base"
-        color={ isActive ? 'yellow.500' : 'text.primary' }
+        color={ isActive ? { base: 'yellow.400', _dark: 'yellow.500' } : 'text.primary' }
         fontWeight={ isActive ? 600 : 500 }
-        bg={ isActive ? { base: 'blackAlpha.50', _dark: 'whiteAlpha.100' } : 'transparent' }
-        _hover={ isActive ? undefined : { color: 'yellow.500' } }
+        _hover={ isActive ? undefined : { color: { base: 'yellow.400', _dark: 'yellow.500' } } }
       >
         <Text
           marginLeft={ 2 }
@@ -51,14 +47,6 @@ const NetworkMenuLink = ({ title, isActive: isActiveProp, isMobile, url }: Props
         >
           { title }
         </Text>
-        { isActive && (
-          <IconSvg
-            name="check"
-            boxSize="20px"
-            marginLeft="auto"
-            color="yellow.500"
-          />
-        ) }
       </chakra.a>
     </Box>
   );
