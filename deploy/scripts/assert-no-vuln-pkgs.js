@@ -42,6 +42,7 @@ const BAD = {
     if (v.startsWith('4.')) return lt(v, '4.0.4');
     return false;
   },
+  'source-map-js': (v) => lt(v, '1.2.2'),
   axios: (v) => lt(v, '1.20.0'),
   '@grpc/grpc-js': (v) => lt(v, '1.14.5'),
   undici: (v) => lt(v, '6.28.1'),
@@ -58,6 +59,7 @@ const FIX = {
   'serialize-javascript': '7.0.7',
   picomatch: '4.0.4',
   browserslist: '4.28.7',
+  'source-map-js': '1.2.2',
   axios: '1.20.0',
   '@grpc/grpc-js': '1.14.5',
   undici: '6.28.1',
