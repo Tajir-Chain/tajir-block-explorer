@@ -40,6 +40,7 @@ const PACKAGES = [
   'picomatch',
   'ws',
   'postcss',
+  'source-map-js',
   'js-yaml',
   'immutable',
   'browserslist',
@@ -107,6 +108,8 @@ function isVulnerable(name, version) {
       return lt(version, '8.21.0');
     case 'postcss':
       return lt(version, '8.5.18');
+    case 'source-map-js':
+      return lt(version, '1.2.2');
     case 'js-yaml':
       if (version.startsWith('3.')) return lt(version, '3.15.1');
       if (version.startsWith('4.')) return lt(version, '4.3.1');
@@ -163,6 +166,8 @@ function patchedVersion(name, version) {
       return '8.21.3';
     case 'postcss':
       return '8.5.18';
+    case 'source-map-js':
+      return '1.2.2';
     case 'js-yaml':
       return version.startsWith('3.') ? '3.15.1' : '4.3.1';
     case 'browserslist':

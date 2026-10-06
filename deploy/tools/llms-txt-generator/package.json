@@ -21,7 +21,8 @@
   },
   "resolutions": {
     "picomatch": "4.0.4",
-    "postcss": "8.5.18"
+    "postcss": "8.5.18",
+    "source-map-js": "1.2.2"
   }
 }
 
