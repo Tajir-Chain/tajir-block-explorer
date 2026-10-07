@@ -47,6 +47,8 @@ const PACKAGES = [
   'axios',
   '@grpc/grpc-js',
   'undici',
+  'braces',
+  'node-forge',
 ];
 
 // Runtime-unnecessary in the shipped explorer image — safe to delete if patching fails.
@@ -98,7 +100,7 @@ function isVulnerable(name, version) {
     case 'serialize-javascript':
       return lt(version, '7.0.3');
     case 'sharp':
-      return lt(version, '0.35.4');
+      return lt(version, '0.35.5');
     case 'picomatch':
       if (version.startsWith('2.')) return lt(version, '2.3.2');
       if (version.startsWith('3.')) return lt(version, '3.0.2');
@@ -127,6 +129,10 @@ function isVulnerable(name, version) {
       return lt(version, '1.14.5');
     case 'undici':
       return lt(version, '6.28.1');
+    case 'braces':
+      return lt(version, '3.0.4');
+    case 'node-forge':
+      return lt(version, '1.4.1');
     default:
       return false;
   }
@@ -157,7 +163,7 @@ function patchedVersion(name, version) {
     case 'serialize-javascript':
       return '7.0.7';
     case 'sharp':
-      return '0.35.4';
+      return '0.35.5';
     case 'picomatch':
       if (version.startsWith('2.')) return '2.3.2';
       if (version.startsWith('3.')) return '3.0.2';
@@ -182,6 +188,10 @@ function patchedVersion(name, version) {
       return '1.14.5';
     case 'undici':
       return '6.28.1';
+    case 'braces':
+      return '3.0.4';
+    case 'node-forge':
+      return '1.4.1';
     default:
       return version;
   }
