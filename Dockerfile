@@ -20,6 +20,8 @@ RUN apk add git
 COPY ./deploy/scripts/force-patched-deps.js /force-patched-deps.js
 COPY ./deploy/scripts/assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
 COPY ./deploy/security-overrides /security-overrides
+# Yarn resolutions for braces/node-forge point at these tarballs (no upstream release).
+COPY ./deploy/security-overrides ./deploy/security-overrides
 ENV SECURITY_OVERRIDES_DIR=/security-overrides
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
     node /force-patched-deps.js /app/node_modules --fail --delete-unused && \

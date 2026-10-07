@@ -18,9 +18,10 @@
     "tsconfig-paths-webpack-plugin": "^4.1.0"
   },
   "resolutions": {
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "serialize-javascript": "7.0.7",
     "picomatch": "2.3.2",
-    "browserslist": ">=4.28.7"
+    "browserslist": ">=4.28.7",
+    "braces": "file:../../security-overrides/braces-3.0.4.tgz"
   }
 }

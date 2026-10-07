@@ -33,7 +33,7 @@ const BAD = {
     const floor = floors[v.split('.')[0]];
     return floor ? lt(v, floor) : false;
   },
-  sharp: (v) => lt(v, '0.35.4'),
+  sharp: (v) => lt(v, '0.35.5'),
   'serialize-javascript': (v) => lt(v, '7.0.3'),
   browserslist: (v) => lt(v, '4.28.7'),
   picomatch: (v) => {
@@ -46,6 +46,8 @@ const BAD = {
   axios: (v) => lt(v, '1.20.0'),
   '@grpc/grpc-js': (v) => lt(v, '1.14.5'),
   undici: (v) => lt(v, '6.28.1'),
+  braces: (v) => lt(v, '3.0.4'),
+  'node-forge': (v) => lt(v, '1.4.1'),
 };
 
 const FIX = {
@@ -55,7 +57,7 @@ const FIX = {
   'brace-expansion': '2.1.4',
   glob: '10.5.0',
   minimatch: '9.0.7',
-  sharp: '0.35.4',
+  sharp: '0.35.5',
   'serialize-javascript': '7.0.7',
   picomatch: '4.0.4',
   browserslist: '4.28.7',
@@ -63,6 +65,8 @@ const FIX = {
   axios: '1.20.0',
   '@grpc/grpc-js': '1.14.5',
   undici: '6.28.1',
+  braces: '3.0.4',
+  'node-forge': '1.4.1',
 };
 
 const DELETE_ALWAYS = new Set([ 'tar', 'sigstore' ]);
