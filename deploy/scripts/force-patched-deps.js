@@ -47,6 +47,8 @@ const PACKAGES = [
   'axios',
   '@grpc/grpc-js',
   'undici',
+  'braces',
+  'node-forge',
 ];
 
 // Runtime-unnecessary in the shipped explorer image — safe to delete if patching fails.
@@ -127,6 +129,10 @@ function isVulnerable(name, version) {
       return lt(version, '1.14.5');
     case 'undici':
       return lt(version, '6.28.1');
+    case 'braces':
+      return lt(version, '3.0.4');
+    case 'node-forge':
+      return lt(version, '1.4.1');
     default:
       return false;
   }
@@ -182,6 +188,10 @@ function patchedVersion(name, version) {
       return '1.14.5';
     case 'undici':
       return '6.28.1';
+    case 'braces':
+      return '3.0.4';
+    case 'node-forge':
+      return '1.4.1';
     default:
       return version;
   }

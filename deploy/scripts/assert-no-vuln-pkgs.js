@@ -46,6 +46,8 @@ const BAD = {
   axios: (v) => lt(v, '1.20.0'),
   '@grpc/grpc-js': (v) => lt(v, '1.14.5'),
   undici: (v) => lt(v, '6.28.1'),
+  braces: (v) => lt(v, '3.0.4'),
+  'node-forge': (v) => lt(v, '1.4.1'),
 };
 
 const FIX = {
@@ -63,6 +65,8 @@ const FIX = {
   axios: '1.20.0',
   '@grpc/grpc-js': '1.14.5',
   undici: '6.28.1',
+  braces: '3.0.4',
+  'node-forge': '1.4.1',
 };
 
 const DELETE_ALWAYS = new Set([ 'tar', 'sigstore' ]);
