@@ -40,9 +40,15 @@ const PACKAGES = [
   'picomatch',
   'ws',
   'postcss',
+  'source-map-js',
   'js-yaml',
   'immutable',
   'browserslist',
+  'axios',
+  '@grpc/grpc-js',
+  'undici',
+  'braces',
+  'node-forge',
 ];
 
 // Runtime-unnecessary in the shipped explorer image — safe to delete if patching fails.
@@ -94,7 +100,7 @@ function isVulnerable(name, version) {
     case 'serialize-javascript':
       return lt(version, '7.0.3');
     case 'sharp':
-      return lt(version, '0.35.4');
+      return lt(version, '0.35.5');
     case 'picomatch':
       if (version.startsWith('2.')) return lt(version, '2.3.2');
       if (version.startsWith('3.')) return lt(version, '3.0.2');
@@ -104,6 +110,8 @@ function isVulnerable(name, version) {
       return lt(version, '8.21.0');
     case 'postcss':
       return lt(version, '8.5.18');
+    case 'source-map-js':
+      return lt(version, '1.2.2');
     case 'js-yaml':
       if (version.startsWith('3.')) return lt(version, '3.15.1');
       if (version.startsWith('4.')) return lt(version, '4.3.1');
@@ -115,6 +123,16 @@ function isVulnerable(name, version) {
       if (version.startsWith('4.')) return lt(version, '4.3.9');
       if (version.startsWith('5.')) return lt(version, '5.1.8');
       return false;
+    case 'axios':
+      return lt(version, '1.20.0');
+    case '@grpc/grpc-js':
+      return lt(version, '1.14.5');
+    case 'undici':
+      return lt(version, '6.28.1');
+    case 'braces':
+      return lt(version, '3.0.4');
+    case 'node-forge':
+      return lt(version, '1.4.1');
     default:
       return false;
   }
@@ -145,7 +163,7 @@ function patchedVersion(name, version) {
     case 'serialize-javascript':
       return '7.0.7';
     case 'sharp':
-      return '0.35.4';
+      return '0.35.5';
     case 'picomatch':
       if (version.startsWith('2.')) return '2.3.2';
       if (version.startsWith('3.')) return '3.0.2';
@@ -154,6 +172,8 @@ function patchedVersion(name, version) {
       return '8.21.3';
     case 'postcss':
       return '8.5.18';
+    case 'source-map-js':
+      return '1.2.2';
     case 'js-yaml':
       return version.startsWith('3.') ? '3.15.1' : '4.3.1';
     case 'browserslist':
@@ -162,6 +182,16 @@ function patchedVersion(name, version) {
       // 3.x has no patched line — jump to last 4.x security release
       if (version.startsWith('5.')) return '5.1.8';
       return '4.3.9';
+    case 'axios':
+      return '1.20.0';
+    case '@grpc/grpc-js':
+      return '1.14.5';
+    case 'undici':
+      return '6.28.1';
+    case 'braces':
+      return '3.0.4';
+    case 'node-forge':
+      return '1.4.1';
     default:
       return version;
   }
@@ -178,9 +208,20 @@ function findTarball(overrideDir, name, version) {
   if (!overrideDir) return null;
   const exact = path.join(overrideDir, `${ name }-${ version }.tgz`);
   if (fs.existsSync(exact)) return exact;
-  // npm pack sometimes uses scoped naming; also try unscoped pattern matches
+  // npm pack names scoped pkgs as "scope-name-version.tgz" (drops the @)
+  const npmPackName = name.startsWith('@') ? `${ name.slice(1).replace('/', '-') }-${ version }.tgz` : null;
+  if (npmPackName) {
+    const scoped = path.join(overrideDir, npmPackName);
+    if (fs.existsSync(scoped)) return scoped;
+  }
+  // also try unscoped pattern matches
   const entries = fs.readdirSync(overrideDir);
-  const match = entries.find((f) => f === `${ name }-${ version }.tgz` || f.endsWith(`-${ name }-${ version }.tgz`));
+  const match = entries.find((f) => (
+    f === `${ name }-${ version }.tgz` ||
+    f === npmPackName ||
+    f.endsWith(`-${ name }-${ version }.tgz`) ||
+    (name.includes('/') && f.endsWith(`${ name.split('/').pop() }-${ version }.tgz`))
+  ));
   return match ? path.join(overrideDir, match) : null;
 }
 

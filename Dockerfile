@@ -20,6 +20,8 @@ RUN apk add git
 COPY ./deploy/scripts/force-patched-deps.js /force-patched-deps.js
 COPY ./deploy/scripts/assert-no-vuln-pkgs.js /assert-no-vuln-pkgs.js
 COPY ./deploy/security-overrides /security-overrides
+# Yarn resolutions for braces/node-forge point at these tarballs (no upstream release).
+COPY ./deploy/security-overrides ./deploy/security-overrides
 ENV SECURITY_OVERRIDES_DIR=/security-overrides
 RUN yarn --frozen-lockfile --network-timeout 100000 && \
     node /force-patched-deps.js /app/node_modules --fail --delete-unused && \
@@ -178,9 +180,13 @@ RUN cd ./deploy/tools/llms-txt-generator && yarn build
 # *****************************
 # Production image, copy all the files and run next
 FROM node:22.14.0-alpine AS runner
-# apk upgrade patches base-layer OS packages (e.g. musl) baked into the pinned
-# node:22.14.0-alpine snapshot; `apk add --upgrade` only touches the named pkgs.
-RUN apk --no-cache upgrade && apk add --no-cache bash curl jq unzip
+# apk upgrade patches base-layer OS packages (e.g. musl/openssl) baked into the
+# pinned node:22.14.0-alpine snapshot; explicitly refresh libssl3/libcrypto3 for
+# CVE-2026-75804 / CVE-2026-84782 (3.3.7-r1 → 3.3.7-r2+).
+RUN apk update && \
+    apk --no-cache upgrade && \
+    apk add --no-cache --upgrade libssl3 libcrypto3 openssl && \
+    apk add --no-cache bash curl jq unzip
 
 # Node base images ship a global `npm` with nested vulnerable deps
 # (/usr/local/lib/node_modules/npm/...). Production only needs `node` + our app

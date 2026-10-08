@@ -33,7 +33,7 @@ const BAD = {
     const floor = floors[v.split('.')[0]];
     return floor ? lt(v, floor) : false;
   },
-  sharp: (v) => lt(v, '0.35.4'),
+  sharp: (v) => lt(v, '0.35.5'),
   'serialize-javascript': (v) => lt(v, '7.0.3'),
   browserslist: (v) => lt(v, '4.28.7'),
   picomatch: (v) => {
@@ -42,6 +42,12 @@ const BAD = {
     if (v.startsWith('4.')) return lt(v, '4.0.4');
     return false;
   },
+  'source-map-js': (v) => lt(v, '1.2.2'),
+  axios: (v) => lt(v, '1.20.0'),
+  '@grpc/grpc-js': (v) => lt(v, '1.14.5'),
+  undici: (v) => lt(v, '6.28.1'),
+  braces: (v) => lt(v, '3.0.4'),
+  'node-forge': (v) => lt(v, '1.4.1'),
 };
 
 const FIX = {
@@ -51,10 +57,16 @@ const FIX = {
   'brace-expansion': '2.1.4',
   glob: '10.5.0',
   minimatch: '9.0.7',
-  sharp: '0.35.4',
+  sharp: '0.35.5',
   'serialize-javascript': '7.0.7',
   picomatch: '4.0.4',
   browserslist: '4.28.7',
+  'source-map-js': '1.2.2',
+  axios: '1.20.0',
+  '@grpc/grpc-js': '1.14.5',
+  undici: '6.28.1',
+  braces: '3.0.4',
+  'node-forge': '1.4.1',
 };
 
 const DELETE_ALWAYS = new Set([ 'tar', 'sigstore' ]);
@@ -99,8 +111,15 @@ function rmrf(p) {
 }
 
 function extractOverride(name, version, destDir) {
-  const tgz = path.join(OVERRIDES, `${ name }-${ version }.tgz`);
-  if (!fs.existsSync(tgz)) throw new Error(`missing override ${ tgz }`);
+  const candidates = [
+    path.join(OVERRIDES, `${ name }-${ version }.tgz`),
+    // npm pack: @scope/name → scope-name-version.tgz
+    name.startsWith('@')
+      ? path.join(OVERRIDES, `${ name.slice(1).replace('/', '-') }-${ version }.tgz`)
+      : null,
+  ].filter(Boolean);
+  const tgz = candidates.find((p) => fs.existsSync(p));
+  if (!tgz) throw new Error(`missing override for ${ name }@${ version } (tried ${ candidates.join(', ') })`);
   const tmp = fs.mkdtempSync('/tmp/assert-vuln-');
   try {
     execFileSync('tar', [ '-xzf', tgz, '-C', tmp ], { stdio: 'pipe' });
