@@ -205,7 +205,7 @@ const ChainIndicators = () => {
                 statsApiQueryResult.data?.secondary_coin_price,
               ).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 6,
+                maximumFractionDigits: 4,
               }),
         hint: `${config.chain.secondaryCoin.symbol} token daily price in USD.`,
         icon: <NativeTokenIcon boxSize={6} type="secondary" />,

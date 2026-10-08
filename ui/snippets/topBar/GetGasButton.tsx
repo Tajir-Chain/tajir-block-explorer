@@ -25,7 +25,7 @@ const GetGasButton = () => {
             const dappId = item.dappId;
             const urlObj = new URL(item.url);
 
-            urlObj.searchParams.append('utm_source', 'blockscout');
+            urlObj.searchParams.append('utm_source', 'tjrscan');
             urlObj.searchParams.append('utm_medium', 'address');
 
             const url = urlObj.toString();
