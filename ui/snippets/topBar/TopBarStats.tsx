@@ -50,7 +50,7 @@ const TopBarStats = () => {
   }
 
   const hasNativeCoinPrice = data?.coin_price && !config.UI.nativeCoinPrice.isHidden;
-  const hasSecondaryCoinPrice = data?.secondary_coin_price && config.chain.secondaryCoin.symbol && (hasNativeCoinPrice ? !isMobile : true);
+  const hasSecondaryCoinPrice = data?.secondary_coin_price && config.chain.secondaryCoin.symbol && !isMobile;
   const hasGasInfo = data?.gas_prices && data.gas_prices.average !== null && config.features.gasTracker.isEnabled && !isMobile;
 
   return (
@@ -79,7 +79,7 @@ const TopBarStats = () => {
           <Flex columnGap={ 1 } ml={ data?.coin_price ? 3 : 0 }>
             <Skeleton loading={ isPlaceholderData }>
               <chakra.span color="text.secondary">{ config.chain.secondaryCoin.symbol } </chakra.span>
-              <span>${ Number(data.secondary_coin_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) }</span>
+              <span>${ Number(data.secondary_coin_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }</span>
             </Skeleton>
           </Flex>
         ) }
