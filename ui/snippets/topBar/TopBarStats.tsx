@@ -51,6 +51,7 @@ const TopBarStats = () => {
 
   const hasNativeCoinPrice = data?.coin_price && !config.UI.nativeCoinPrice.isHidden;
   const hasSecondaryCoinPrice = data?.secondary_coin_price && config.chain.secondaryCoin.symbol && !isMobile;
+  const secondaryCoinPriceChange = data?.secondary_coin_price_change_percentage;
   const hasGasInfo = data?.gas_prices && data.gas_prices.average !== null && config.features.gasTracker.isEnabled && !isMobile;
 
   return (
@@ -76,11 +77,20 @@ const TopBarStats = () => {
           </Flex>
         ) }
         { hasSecondaryCoinPrice && (
-          <Flex columnGap={ 1 } ml={ data?.coin_price ? 3 : 0 }>
+          <Flex columnGap={ 1 } ml={ data?.coin_price ? 3 : 0 } fontWeight={ 400 } fontSize="13px">
             <Skeleton loading={ isPlaceholderData }>
-              <chakra.span color="text.secondary">{ config.chain.secondaryCoin.symbol } </chakra.span>
-              <span>${ Number(data.secondary_coin_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }</span>
+              <chakra.span color="yellow.400">{ config.chain.secondaryCoin.symbol } : </chakra.span>
+              <chakra.span color={{ _light: 'black', _dark: 'white' }}>
+                ${ Number(data.secondary_coin_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }
+              </chakra.span>
             </Skeleton>
+            { secondaryCoinPriceChange != null && (
+              <Skeleton loading={ isPlaceholderData }>
+                <chakra.span color={ Number(secondaryCoinPriceChange) >= 0 ? 'green.500' : { _light: 'rgb(245, 80, 80)', _dark: 'rgb(229, 62, 62)' } }>
+                  { Number(secondaryCoinPriceChange).toFixed(2) }%
+                </chakra.span>
+              </Skeleton>
+            ) }
           </Flex>
         ) }
         { (hasNativeCoinPrice || hasSecondaryCoinPrice) && hasGasInfo && <TextSeparator/> }
