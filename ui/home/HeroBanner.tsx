@@ -20,7 +20,7 @@ const TEXT_COLOR_DEFAULT = 'white';
 const BORDER_DEFAULT = 'none';
 
 const copyableHoverStyle = {
-  color: { _light: 'black', _dark: 'white' },
+  color: 'white',
   _before: {
     content: `" "`,
     position: 'absolute' as const,
@@ -29,10 +29,10 @@ const copyableHoverStyle = {
     width: 'calc(100% + 12px)',
     height: 'calc(100% + 4px)',
     borderRadius: 'base',
-    borderColor: 'address.highlighted.border',
+    borderColor: 'green.600',
     borderWidth: '1px',
     borderStyle: 'dashed',
-    bgColor: 'address.highlighted.bg',
+    bgColor: 'green.900',
     zIndex: -1,
   },
 };
