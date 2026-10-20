@@ -183,9 +183,15 @@ FROM node:22.14.0-alpine AS runner
 # apk upgrade patches base-layer OS packages (e.g. musl/openssl) baked into the
 # pinned node:22.14.0-alpine snapshot; explicitly refresh libssl3/libcrypto3 for
 # CVE-2026-75804 / CVE-2026-84782 (3.3.7-r1 → 3.3.7-r2+).
+# Also upgrade curl/libcurl to 8.14.1-r3 to resolve:
+#   CVE-2026-5773  (curl SMB connection reuse)
+#   CVE-2026-6276  (libcurl cookie leak on connection reuse)
+#   CVE-2026-8286  (TLS config mismatch)
+#   CVE-2026-8927  (proxy auth state not cleared)
+#   CVE-2026-92392 (HTTP/2 upload Use-After-Free)
 RUN apk update && \
     apk --no-cache upgrade && \
-    apk add --no-cache --upgrade libssl3 libcrypto3 openssl && \
+    apk add --no-cache --upgrade libssl3 libcrypto3 openssl curl libcurl && \
     apk add --no-cache bash curl jq unzip
 
 # Node base images ship a global `npm` with nested vulnerable deps
