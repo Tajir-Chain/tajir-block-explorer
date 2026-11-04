@@ -59,6 +59,12 @@ jobs:
         run: docker build --no-cache -t "${{ steps.meta.outputs.tag }}" .
 
       # ── TRIVY INSTALLATION (pinned, checksum-verified) ──────────────────────
+      - name: Cache Trivy binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/trivy
+          key: trivy-${{ env.TRIVY_VERSION }}-linux-64bit
+
       - name: Install Trivy
         run: |
           set -euo pipefail
@@ -78,14 +84,55 @@ jobs:
 
           if [ "$NEEDS_INSTALL" = "1" ]; then
             rm -f "$BIN_DIR/trivy"
-            # Official Trivy installer — picks correct asset for the platform,
-            # verifies the SHA256 checksum, and installs to -b <dir>.
-            curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh" \
-              | sh -s -- -b "$BIN_DIR" "v${VERSION}"
+            INSTALLED=0
+            # The official installer pulls the tarball via get.trivy.dev, which
+            # intermittently refuses connections (curl exit code 7). Retry with
+            # backoff before falling back to a direct GitHub release download.
+            for ATTEMPT in 1 2 3; do
+              if curl -sfL --retry 3 --retry-all-errors \
+                "https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh" \
+                | sh -s -- -b "$BIN_DIR" "v${VERSION}"; then
+                INSTALLED=1
+                break
+              fi
+              echo "Install attempt ${ATTEMPT} failed — retrying in $((ATTEMPT * 10))s..."
+              sleep $((ATTEMPT * 10))
+            done
+
+            if [ "$INSTALLED" != "1" ]; then
+              # Fallback: direct GitHub release download (bypasses get.trivy.dev),
+              # still SHA256-verified against the official checksums file.
+              echo "Installer kept failing — falling back to direct GitHub release download..."
+              TARBALL="trivy_${VERSION}_Linux-64bit.tar.gz"
+              CHECKSUMS="trivy_${VERSION}_checksums.txt"
+              curl -sfL --retry 3 --retry-all-errors \
+                -o "$TARBALL" \
+                "https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/${TARBALL}"
+              curl -sfL --retry 3 --retry-all-errors \
+                -o "$CHECKSUMS" \
+                "https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/${CHECKSUMS}"
+              WANT=$(grep " ${TARBALL}$" "$CHECKSUMS" | awk '{print $1}')
+              GOT=$(sha256sum "$TARBALL" | awk '{print $1}')
+              if [ "$WANT" != "$GOT" ]; then
+                echo "Checksum mismatch for ${TARBALL} (want ${WANT}, got ${GOT})" >&2
+                exit 1
+              fi
+              tar -xzf "$TARBALL" trivy
+              install -m 0755 trivy "$BIN_DIR/trivy"
+              rm -f "$TARBALL" "$CHECKSUMS" trivy
+            fi
           fi
 
           "$BIN_DIR/trivy" --version
           echo "$BIN_DIR" >> "$GITHUB_PATH"
+
+      - name: Cache Trivy vulnerability DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          # Unique key → always saves a fresh copy; restore-keys reuse the newest
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
 
       # ── TRIVY SCANNING (CLI, multi-image) ───────────────────────────────────
       - name: Run Trivy vulnerability scanner
@@ -141,7 +188,10 @@ jobs:
         id: summary
         run: |
           set -euo pipefail
-          echo "## Trivy HIGH/CRITICAL — ${{ github.repository }} @ \`${SOURCE_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
+          # printf with a single-quoted format string — no fragile backslash
+          # escapes for the markdown backticks
+          printf '## Trivy HIGH/CRITICAL — %s @ `%s`' \
+            "${GITHUB_REPOSITORY}" "${SOURCE_SHA:0:7}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ ! -f trivy-results.json ]; then
@@ -221,13 +271,10 @@ jobs:
           REF: ${{ github.head_ref }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          # Build the payload with jq so quotes/backticks/newlines are escaped correctly
-          PAYLOAD=$(jq -n \
-            --arg repo "$REPO" \
-            --arg ref "$REF" \
-            --arg sha "${SOURCE_SHA::7}" \
-            --arg url "$RUN_URL" \
-            '{text: "🛡️ *Trivy scan failed in \($repo)* (PR `\($ref)`, sha `\($sha)`)\n🔗 \($url)"}')
+          # Build the message in shell, JSON-encode with jq — no fragile quoting
+          MSG=$(printf '🛡️ *Trivy scan failed in %s* (PR `%s`, sha `%s`) — %s' \
+            "$REPO" "$REF" "${SOURCE_SHA:0:7}" "$RUN_URL")
+          PAYLOAD=$(jq -n --arg text "$MSG" '{text: $text}')
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "$PAYLOAD" "${SLACK_WEBHOOK_URL}" || true
 
@@ -258,7 +305,9 @@ jobs:
         run: |
           MODE="HIGH/CRITICAL clean"
           [ "${FAIL_ON_VULNERABILITIES}" != "true" ] && MODE="scan complete (advisory — findings not blocking)"
-          BODY="🐳 Image built & scanned (${MODE}) and staged as \`${{ steps.meta.outputs.tag }}\`. It will be promoted as-is on merge — no rebuild."
+          # printf with single-quoted format — markdown backticks are safe here
+          BODY=$(printf '🐳 Image built & scanned (%s) and staged as `%s`. It will be promoted as-is on merge — no rebuild.' \
+            "$MODE" "${{ steps.meta.outputs.tag }}")
           ID=$(gh api --paginate "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
             --jq '.[] | select(.body | startswith("🐳 Image built")) | .id' | tail -1)
           if [ -n "$ID" ]; then
