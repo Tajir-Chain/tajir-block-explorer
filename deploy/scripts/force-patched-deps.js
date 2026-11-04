@@ -49,6 +49,13 @@ const PACKAGES = [
   'undici',
   'braces',
   'node-forge',
+  'follow-redirects',
+  'markdown-it',
+  'ajv',
+  'bn.js',
+  'fast-copy',
+  'webpack',
+  'uuid',
 ];
 
 // Runtime-unnecessary in the shipped explorer image — safe to delete if patching fails.
@@ -88,7 +95,7 @@ function isVulnerable(name, version) {
       if (version.startsWith('5.')) return lt(version, '5.0.9');
       return true;
     case 'glob':
-      return version.startsWith('10.') && lt(version, '10.5.0');
+      return lt(version, '14.0.2');
     case 'minimatch': {
       const floors = {
         3: '3.1.4', 4: '4.2.5', 5: '5.1.8', 6: '6.2.2',
@@ -98,7 +105,7 @@ function isVulnerable(name, version) {
       return floor ? lt(version, floor) : false;
     }
     case 'serialize-javascript':
-      return lt(version, '7.0.3');
+      return lt(version, '7.1.3');
     case 'sharp':
       return lt(version, '0.35.5');
     case 'picomatch':
@@ -109,7 +116,7 @@ function isVulnerable(name, version) {
     case 'ws':
       return lt(version, '8.21.0');
     case 'postcss':
-      return lt(version, '8.5.18');
+      return lt(version, '8.5.23');
     case 'source-map-js':
       return lt(version, '1.2.2');
     case 'js-yaml':
@@ -128,11 +135,32 @@ function isVulnerable(name, version) {
     case '@grpc/grpc-js':
       return lt(version, '1.14.5');
     case 'undici':
-      return lt(version, '6.28.1');
+      return lt(version, '6.29.1');
     case 'braces':
       return lt(version, '3.0.4');
     case 'node-forge':
       return lt(version, '1.4.1');
+    case 'follow-redirects':
+      return lt(version, '1.16.2');
+    case 'markdown-it':
+      return lt(version, '14.3.3');
+    case 'ajv':
+      if (version.startsWith('6.')) return lt(version, '6.14.0');
+      if (version.startsWith('8.')) return lt(version, '8.18.0');
+      return false;
+    case 'bn.js':
+      if (version.startsWith('4.')) return lt(version, '4.12.3');
+      if (version.startsWith('5.')) return lt(version, '5.2.3');
+      return false;
+    case 'fast-copy':
+      if (version.startsWith('2.')) return lt(version, '2.2.0');
+      if (version.startsWith('3.')) return lt(version, '3.1.0');
+      if (version.startsWith('4.')) return lt(version, '4.1.0');
+      return false;
+    case 'webpack':
+      return lt(version, '5.104.0');
+    case 'uuid':
+      return lt(version, '11.1.1');
     default:
       return false;
   }
@@ -152,7 +180,7 @@ function patchedVersion(name, version) {
       if (version.startsWith('3.')) return '3.0.6';
       return '2.1.4';
     case 'glob':
-      return '10.5.0';
+      return '14.0.2';
     case 'minimatch': {
       const floors = {
         3: '3.1.4', 4: '4.2.5', 5: '5.1.8', 6: '6.2.2',
@@ -161,7 +189,7 @@ function patchedVersion(name, version) {
       return floors[parseVer(version)[0]] || '9.0.7';
     }
     case 'serialize-javascript':
-      return '7.0.7';
+      return '7.1.3';
     case 'sharp':
       return '0.35.5';
     case 'picomatch':
@@ -171,7 +199,7 @@ function patchedVersion(name, version) {
     case 'ws':
       return '8.21.3';
     case 'postcss':
-      return '8.5.18';
+      return '8.5.23';
     case 'source-map-js':
       return '1.2.2';
     case 'js-yaml':
@@ -187,11 +215,27 @@ function patchedVersion(name, version) {
     case '@grpc/grpc-js':
       return '1.14.5';
     case 'undici':
-      return '6.28.1';
+      return '6.29.1';
     case 'braces':
       return '3.0.4';
     case 'node-forge':
       return '1.4.1';
+    case 'follow-redirects':
+      return '1.16.2';
+    case 'markdown-it':
+      return '14.3.3';
+    case 'ajv':
+      return version.startsWith('8.') ? '8.18.0' : '6.14.0';
+    case 'bn.js':
+      return version.startsWith('4.') ? '4.12.3' : '5.2.3';
+    case 'fast-copy':
+      if (version.startsWith('2.')) return '2.2.0';
+      if (version.startsWith('4.')) return '4.1.0';
+      return '3.1.0';
+    case 'webpack':
+      return '5.104.0';
+    case 'uuid':
+      return '11.1.1';
     default:
       return version;
   }
