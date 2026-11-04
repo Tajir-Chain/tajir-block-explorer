@@ -24,7 +24,7 @@ const BAD = {
     if (v.startsWith('5.')) return lt(v, '5.0.9');
     return true;
   },
-  glob: (v) => v.startsWith('10.') && lt(v, '10.5.0'),
+  glob: (v) => lt(v, '14.0.2'),
   minimatch: (v) => {
     const floors = {
       3: '3.1.4', 4: '4.2.5', 5: '5.1.8', 6: '6.2.2',
@@ -34,7 +34,7 @@ const BAD = {
     return floor ? lt(v, floor) : false;
   },
   sharp: (v) => lt(v, '0.35.5'),
-  'serialize-javascript': (v) => lt(v, '7.0.3'),
+  'serialize-javascript': (v) => lt(v, '7.1.3'),
   browserslist: (v) => lt(v, '4.28.7'),
   picomatch: (v) => {
     if (v.startsWith('2.')) return lt(v, '2.3.2');
@@ -45,9 +45,30 @@ const BAD = {
   'source-map-js': (v) => lt(v, '1.2.2'),
   axios: (v) => lt(v, '1.20.0'),
   '@grpc/grpc-js': (v) => lt(v, '1.14.5'),
-  undici: (v) => lt(v, '6.28.1'),
+  undici: (v) => lt(v, '6.29.1'),
   braces: (v) => lt(v, '3.0.4'),
   'node-forge': (v) => lt(v, '1.4.1'),
+  'follow-redirects': (v) => lt(v, '1.16.2'),
+  'markdown-it': (v) => lt(v, '14.3.3'),
+  ajv: (v) => {
+    if (v.startsWith('6.')) return lt(v, '6.14.0');
+    if (v.startsWith('8.')) return lt(v, '8.18.0');
+    return false;
+  },
+  'bn.js': (v) => {
+    if (v.startsWith('4.')) return lt(v, '4.12.3');
+    if (v.startsWith('5.')) return lt(v, '5.2.3');
+    return false;
+  },
+  'fast-copy': (v) => {
+    if (v.startsWith('2.')) return lt(v, '2.2.0');
+    if (v.startsWith('3.')) return lt(v, '3.1.0');
+    if (v.startsWith('4.')) return lt(v, '4.1.0');
+    return false;
+  },
+  webpack: (v) => lt(v, '5.104.0'),
+  uuid: (v) => lt(v, '11.1.1'),
+  postcss: (v) => lt(v, '8.5.23'),
 };
 
 const FIX = {
@@ -55,18 +76,26 @@ const FIX = {
   sigstore: '4.1.1',
   'ip-address': '10.3.1',
   'brace-expansion': '2.1.4',
-  glob: '10.5.0',
+  glob: '14.0.2',
   minimatch: '9.0.7',
   sharp: '0.35.5',
-  'serialize-javascript': '7.0.7',
+  'serialize-javascript': '7.1.3',
   picomatch: '4.0.4',
   browserslist: '4.28.7',
   'source-map-js': '1.2.2',
   axios: '1.20.0',
   '@grpc/grpc-js': '1.14.5',
-  undici: '6.28.1',
+  undici: '6.29.1',
   braces: '3.0.4',
   'node-forge': '1.4.1',
+  'follow-redirects': '1.16.2',
+  'markdown-it': '14.3.3',
+  ajv: '6.14.0',
+  'bn.js': '5.2.3',
+  'fast-copy': '3.1.0',
+  webpack: '5.104.0',
+  uuid: '11.1.1',
+  postcss: '8.5.23',
 };
 
 const DELETE_ALWAYS = new Set([ 'tar', 'sigstore' ]);
@@ -182,7 +211,13 @@ function scrubPackages() {
         ? (FIX.minimatch && version.startsWith('3.') ? '3.1.4' : FIX[name])
         : name === 'picomatch'
           ? (version.startsWith('2.') ? '2.3.2' : FIX[name])
-          : FIX[name];
+          : name === 'ajv'
+            ? (version.startsWith('8.') ? '8.18.0' : '6.14.0')
+            : name === 'bn.js'
+              ? (version.startsWith('4.') ? '4.12.3' : '5.2.3')
+              : name === 'fast-copy'
+                ? (version.startsWith('2.') ? '2.2.0' : version.startsWith('4.') ? '4.1.0' : '3.1.0')
+                : FIX[name];
 
     try {
       if (DELETE_ALWAYS.has(name)) {
