@@ -1,6 +1,6 @@
 name: Trivy Scan & Stage (DevNet PR)
 
-# Triggers ONLY on PR events to devnet. 
+# Triggers ONLY on PR events to devnet.
 # 'synchronize' and 'reopened' are included so the scan updates if the developer pushes fixes to the PR.
 # 'closed' is intentionally omitted to prevent running on merge/close.
 on:
@@ -13,6 +13,7 @@ env:
   DOCKERHUB_IMAGE: tajirchain/tajir-block-explorer
   # Use the PR head SHA to ensure the staged image matches the exact code being reviewed
   SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+  TRIVY_VERSION: "0.71.0"
 
 permissions:
   contents: read
@@ -33,6 +34,21 @@ jobs:
           echo "tag=${DOCKERHUB_IMAGE}:scan-${SOURCE_SHA}" >> "$GITHUB_OUTPUT"
           echo "Staging image as: ${DOCKERHUB_IMAGE}:scan-${SOURCE_SHA}"
 
+      # ── SCAN LIST ───────────────────────────────────────────────────────────
+      # The scan step iterates over scan-images.txt, so it must exist.
+      # The PR's built image is always scanned; optionally append extra images
+      # (one per line) by committing a scan-images.extra.txt at the repo root.
+      - name: Prepare image scan list
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${{ steps.meta.outputs.tag }}" > "$GITHUB_WORKSPACE/scan-images.txt"
+          if [ -f "$GITHUB_WORKSPACE/scan-images.extra.txt" ]; then
+            cat "$GITHUB_WORKSPACE/scan-images.extra.txt" >> "$GITHUB_WORKSPACE/scan-images.txt"
+          fi
+          sort -u "$GITHUB_WORKSPACE/scan-images.txt" -o "$GITHUB_WORKSPACE/scan-images.txt"
+          echo "Images to scan:"
+          cat "$GITHUB_WORKSPACE/scan-images.txt"
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
@@ -42,40 +58,94 @@ jobs:
         # --no-cache ensures prior vulnerable node_modules layers cannot survive
         run: docker build --no-cache -t "${{ steps.meta.outputs.tag }}" .
 
-      # ── IMPROVED TRIVY SCANNING (Clean JSON + Markdown Summary) ────────────
-      - name: Run Trivy vulnerability scanner (JSON)
-        id: trivy-json
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ steps.meta.outputs.tag }}'
-          format: 'json'
-          output: 'trivy-results.json'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: 'true'
-          timeout: '20m'
-          exit-code: '0'
+      # ── TRIVY INSTALLATION (pinned, checksum-verified) ──────────────────────
+      - name: Install Trivy
+        run: |
+          set -euo pipefail
+          BIN_DIR="$HOME/.local/bin"
+          mkdir -p "$BIN_DIR"
 
-      - name: Run Trivy vulnerability scanner (Table)
-        id: trivy-table
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ steps.meta.outputs.tag }}'
-          format: 'table'
-          output: 'trivy-report.txt'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: 'true'
-          exit-code: '0'
-          timeout: '20m'
-          skip-setup-trivy: true # Skips re-downloading since the JSON step already set it up
+          VERSION="${TRIVY_VERSION}"
+          echo "Installing Trivy v${VERSION}..."
 
+          # Reinstall if missing OR if a different version is already cached
+          NEEDS_INSTALL=0
+          if [ ! -x "$BIN_DIR/trivy" ]; then
+            NEEDS_INSTALL=1
+          elif ! "$BIN_DIR/trivy" --version 2>/dev/null | grep -q "Version: ${VERSION}"; then
+            NEEDS_INSTALL=1
+          fi
+
+          if [ "$NEEDS_INSTALL" = "1" ]; then
+            rm -f "$BIN_DIR/trivy"
+            # Official Trivy installer — picks correct asset for the platform,
+            # verifies the SHA256 checksum, and installs to -b <dir>.
+            curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh" \
+              | sh -s -- -b "$BIN_DIR" "v${VERSION}"
+          fi
+
+          "$BIN_DIR/trivy" --version
+          echo "$BIN_DIR" >> "$GITHUB_PATH"
+
+      # ── TRIVY SCANNING (CLI, multi-image) ───────────────────────────────────
+      - name: Run Trivy vulnerability scanner
+        id: trivy
+        run: |
+          set -euo pipefail
+          rm -f trivy-results.json trivy-report.txt trivy-json-parts.txt trivy-table-parts.txt
+          touch trivy-json-parts.txt trivy-table-parts.txt
+
+          while IFS= read -r IMG; do
+            [ -z "$IMG" ] && continue
+            SAFE=$(printf '%s' "$IMG" | tr '/:' '__')
+
+            echo "::group::Scanning ${IMG}"
+            trivy image \
+              --severity CRITICAL,HIGH \
+              --ignore-unfixed \
+              --exit-code 0 \
+              --timeout 20m \
+              --format json \
+              --output "trivy-${SAFE}.json" \
+              "$IMG"
+
+            # Convert JSON → human-readable table. Fallback to raw JSON if
+            # `trivy convert` is unavailable or chokes on a malformed result.
+            trivy convert --format table --output "trivy-${SAFE}.txt" "trivy-${SAFE}.json" 2>/dev/null \
+              || cp "trivy-${SAFE}.json" "trivy-${SAFE}.txt"
+            echo "::endgroup::"
+
+            echo "trivy-${SAFE}.json" >> trivy-json-parts.txt
+            echo "trivy-${SAFE}.txt"  >> trivy-table-parts.txt
+          done < "$GITHUB_WORKSPACE/scan-images.txt"
+
+          # Guard against empty file lists: `jq -s '...' $(cat file)` and
+          # `cat $(cat file)` both hang/fail when the parts file is empty.
+          # Use mapfile + array expansion instead.
+          if [ -s trivy-json-parts.txt ]; then
+            mapfile -t JSON_FILES < trivy-json-parts.txt
+            jq -s '{Results: [ .[] | (.Results // [])[] ]}' "${JSON_FILES[@]}" > trivy-results.json
+          else
+            echo '{"Results":[]}' > trivy-results.json
+          fi
+
+          if [ -s trivy-table-parts.txt ]; then
+            mapfile -t TABLE_FILES < trivy-table-parts.txt
+            cat "${TABLE_FILES[@]}" > trivy-report.txt
+          else
+            : > trivy-report.txt
+          fi
+
+      # ── SUMMARY GENERATION ──────────────────────────────────────────────────
       - name: Generate Trivy Summary
         id: summary
         run: |
+          set -euo pipefail
           echo "## Trivy HIGH/CRITICAL — ${{ github.repository }} @ \`${SOURCE_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ ! -f trivy-results.json ]; then
-            echo "** No scan results available — failing CLOSED.**" >> $GITHUB_STEP_SUMMARY
+            echo "**No scan results available — failing CLOSED.**" >> $GITHUB_STEP_SUMMARY
             echo "total=-1" >> $GITHUB_OUTPUT   # sentinel: "-1" != "0" → gate fails below
             exit 0
           fi
@@ -126,7 +196,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo "> **Tip:** Download the full \`trivy-report.txt\` artifact for complete details." >> $GITHUB_STEP_SUMMARY
+          echo "> **Tip:** Download the full `trivy-report.txt` artifact for complete details." >> $GITHUB_STEP_SUMMARY
           echo "total=${TOTAL}" >> $GITHUB_OUTPUT
 
       - name: Vulnerability Gate
@@ -135,12 +205,12 @@ jobs:
         run: |
           TOTAL="${{ steps.summary.outputs.total }}"
           if [ "${FAIL_ON_VULNERABILITIES}" = "true" ] && [ "${TOTAL}" != "0" ]; then
-            echo " FAIL_ON_VULNERABILITIES is enabled."
-            echo "   Found ${TOTAL} HIGH/CRITICAL vulnerability(s)."
-            echo "   Pipeline is BLOCKED. Fix vulnerabilities before proceeding."
+            echo "FAIL_ON_VULNERABILITIES is enabled."
+            echo "  Found ${TOTAL} HIGH/CRITICAL vulnerability(s)."
+            echo "  Pipeline is BLOCKED. Fix vulnerabilities before proceeding."
             exit 1
           fi
-          echo " No HIGH/CRITICAL vulnerabilities found. Gate passed."
+          echo "No HIGH/CRITICAL vulnerabilities found. Gate passed."
 
       # ── NOTIFICATION & FAILURE HANDLING ─────────────────────────────────────
       - name: Notify Slack on failure
@@ -151,9 +221,15 @@ jobs:
           REF: ${{ github.head_ref }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # Build the payload with jq so quotes/backticks/newlines are escaped correctly
+          PAYLOAD=$(jq -n \
+            --arg repo "$REPO" \
+            --arg ref "$REF" \
+            --arg sha "${SOURCE_SHA::7}" \
+            --arg url "$RUN_URL" \
+            '{text: "🛡️ *Trivy scan failed in \($repo)* (PR `\($ref)`, sha `\($sha)`)\n🔗 \($url)"}')
           curl -sS -X POST -H 'Content-type: application/json' \
-            --data "{\"text\": \"🛡️ *Trivy scan failed in ${REPO}* (PR \`${REF}\`, sha \`${SOURCE_SHA::7}\`)\n🔗 ${RUN_URL}\"}" \
-            "${SLACK_WEBHOOK_URL}" || true
+            --data "$PAYLOAD" "${SLACK_WEBHOOK_URL}" || true
 
       - name: Fail if findings
         if: steps.gate.outcome == 'failure'
@@ -199,4 +275,7 @@ jobs:
           path: |
             trivy-results.json
             trivy-report.txt
+            trivy-*.json
+            trivy-*.txt
           retention-days: 30
+          if-no-files-found: warn
