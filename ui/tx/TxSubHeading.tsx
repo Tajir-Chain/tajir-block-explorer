@@ -20,7 +20,14 @@ import TxInterpretation from 'ui/shared/tx/interpretation/TxInterpretation';
 import { createNovesSummaryObject } from './assetFlows/utils/createNovesSummaryObject';
 import type { TxQuery } from './useTxQuery';
 
-const QAIF_URL = 'https://qaif.io/?ref=tjrscan.com';
+const QAIF_REF = 'tjrscan.com';
+
+function getQaifTrackUrl(txHash: string) {
+  const url = new URL('https://qaif.io/');
+  url.searchParams.set('tx', txHash);
+  url.searchParams.set('ref', QAIF_REF);
+  return url.toString();
+}
 
 type Props = {
   hash: string;
@@ -150,7 +157,7 @@ const TxSubHeading = ({ hash, hasTag, txQuery }: Props) => {
         ) }
         <NetworkExplorers type="tx" pathParam={ hash }/>
         <Link
-          href={ QAIF_URL }
+          href={ getQaifTrackUrl(hash) }
           external
           noIcon
           variant="plain"
