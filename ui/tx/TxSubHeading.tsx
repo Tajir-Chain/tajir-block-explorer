@@ -20,6 +20,8 @@ import TxInterpretation from 'ui/shared/tx/interpretation/TxInterpretation';
 import { createNovesSummaryObject } from './assetFlows/utils/createNovesSummaryObject';
 import type { TxQuery } from './useTxQuery';
 
+const QAIF_URL = 'https://qaif.io/?ref=tjrscan.com';
+
 type Props = {
   hash: string;
   hasTag: boolean;
@@ -146,7 +148,51 @@ const TxSubHeading = ({ hash, hasTag, txQuery }: Props) => {
         { appActionData && (
           <AppActionButton data={ appActionData } txHash={ hash } source="Txn"/>
         ) }
-        <NetworkExplorers type="tx" pathParam={ hash } ml="auto"/>
+        <NetworkExplorers type="tx" pathParam={ hash }/>
+        <Link
+          href={ QAIF_URL }
+          external
+          noIcon
+          variant="plain"
+          ml="auto"
+          flexShrink={ 0 }
+          display="inline-flex"
+          alignItems="center"
+          gap={{ base: '6px', lg: '8px' }}
+          whiteSpace="nowrap"
+          textDecoration="none"
+          fontWeight="600"
+          fontSize={{ base: '13px', lg: 'md' }}
+          lineHeight="1.2"
+          px={{ base: '10px', lg: '16px' }}
+          py={{ base: '6px', lg: '10px' }}
+          borderRadius={{ base: '8px', lg: '10px' }}
+          borderWidth="1px"
+          borderStyle="solid"
+          borderColor="rgba(255, 255, 255, 0.28)"
+          color="#fff"
+          bg="#0b1424"
+          _hover={{
+            textDecoration: 'none',
+            color: '#fff',
+            bg: '#0b1424',
+            borderColor: 'rgba(255, 255, 255, 0.45)',
+          }}
+          _active={{
+            color: '#fff',
+            bg: '#0b1424',
+            borderColor: 'rgba(255, 255, 255, 0.28)',
+          }}
+        >
+          <Box boxSize={{ base: '14px', lg: '18px' }} flexShrink={ 0 } aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="100%" height="100%">
+              <ellipse cx="20" cy="46" rx="5" ry="7.5" fill="#d9ad57" opacity="0.4"/>
+              <ellipse cx="31" cy="32" rx="5.5" ry="8" fill="#d9ad57" opacity="0.7"/>
+              <ellipse cx="44" cy="18" rx="6" ry="8.5" fill="#d9ad57"/>
+            </svg>
+          </Box>
+          Track with Qaif
+        </Link>
       </Flex>
     </Box>
   );
