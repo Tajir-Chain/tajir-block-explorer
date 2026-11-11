@@ -33,7 +33,7 @@ import { Tooltip } from 'toolkit/chakra/tooltip';
 import CopyToClipboard from 'ui/shared/CopyToClipboard';
 import * as DetailedInfo from 'ui/shared/DetailedInfo/DetailedInfo';
 import DetailedInfoNativeCoinValue from 'ui/shared/DetailedInfo/DetailedInfoNativeCoinValue';
-import DetailedInfoSponsoredItem from 'ui/shared/DetailedInfo/DetailedInfoSponsoredItem';
+// import DetailedInfoSponsoredItem from 'ui/shared/DetailedInfo/DetailedInfoSponsoredItem';
 import DetailedInfoTimestamp from 'ui/shared/DetailedInfo/DetailedInfoTimestamp';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import AddressEntityInterop from 'ui/shared/entities/address/AddressEntityInterop';
@@ -429,7 +429,8 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
         <TxAllowedPeekers items={ data.allowed_peekers }/>
       ) }
 
-      <DetailedInfoSponsoredItem isLoading={ isLoading }/>
+      {/* Sponsored row hidden until there are sponsors or ads */}
+      {/* <DetailedInfoSponsoredItem isLoading={ isLoading }/> */}
 
       <DetailedInfo.ItemDivider/>
 
