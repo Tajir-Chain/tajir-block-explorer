@@ -80,7 +80,7 @@ const HeroBanner = () => {
       columnGap={ 8 }
       alignItems="center"
     >
-      <Box flexGrow={ 1 } py={{ base: 4, lg: 4 }}>
+      <Box flexGrow={ 1 } minW={ 0 } py={{ base: 4, lg: 4 }}>
         <Flex mb={{ base: 2, lg: 3 }} justifyContent="space-between" alignItems="center" columnGap={ 2 }>
           <Heading
             as="h1"
@@ -106,72 +106,85 @@ const HeroBanner = () => {
           ) }
         </Flex>
 
-        { /* Mobile: subtle inline network info below heading */ }
+        { /* Mobile: stacked network info so the URL can shrink and the copy icon stays fully visible */ }
         { hasNetworkInfo && (
           <Flex
             display={{ base: 'flex', lg: 'none' }}
-            alignItems="center"
-            gap={ 3 }
-            mb={ 2 }
-            flexWrap="wrap"
+            direction="column"
+            alignItems="stretch"
+            gap={ 2 }
+            mb={ 3 }
+            w="100%"
+            minW={ 0 }
             bg="blackAlpha.400"
             backdropFilter="blur(12px)"
             borderRadius="md"
             border="1px solid"
             borderColor="whiteAlpha.200"
-            py={ 1.5 }
+            py={ 2 }
             px={ 3 }
           >
             { config.chain.rpcUrls?.[0] && (
-              <Flex
-                alignItems="center"
-                className="address-entity"
-                borderRadius="md"
-                cursor="pointer"
-                position="relative"
-                color="whiteAlpha.800"
-                _hover={ copyableHoverStyle }
-              >
-                <Text fontSize="2xs" fontWeight="medium" color="whiteAlpha.500" mr={ 1 }>
-                  RPC
+              <Box minW={ 0 }>
+                <Text fontSize="2xs" fontWeight="medium" color="whiteAlpha.600">
+                  RPC URL
                 </Text>
-                <Text fontSize="2xs" color="inherit" wordBreak="break-all">
-                  { config.chain.rpcUrls[0] }
-                </Text>
-                <CopyToClipboard
-                  text={ config.chain.rpcUrls[0] }
-                  boxSize={ 3.5 }
-                  ml={ 0.5 }
-                />
-              </Flex>
-            ) }
-
-            { config.chain.rpcUrls?.[0] && config.chain.id && (
-              <Text fontSize="2xs" color="whiteAlpha.400">•</Text>
+                <Flex
+                  alignItems="center"
+                  minW={ 0 }
+                  className="address-entity"
+                  borderRadius="md"
+                  cursor="pointer"
+                  position="relative"
+                  color="white"
+                  _hover={ copyableHoverStyle }
+                >
+                  <Text
+                    fontSize="xs"
+                    color="inherit"
+                    minW={ 0 }
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                  >
+                    { config.chain.rpcUrls[0] }
+                  </Text>
+                  <CopyToClipboard
+                    text={ config.chain.rpcUrls[0] }
+                    boxSize={ 5 }
+                    ml={ 1 }
+                    flexShrink={ 0 }
+                  />
+                </Flex>
+              </Box>
             ) }
 
             { config.chain.id && (
-              <Flex
-                alignItems="center"
-                className="address-entity"
-                borderRadius="md"
-                cursor="pointer"
-                position="relative"
-                color="whiteAlpha.800"
-                _hover={ copyableHoverStyle }
-              >
-                <Text fontSize="2xs" fontWeight="medium" color="whiteAlpha.500" mr={ 1 }>
+              <Box minW={ 0 }>
+                <Text fontSize="2xs" fontWeight="medium" color="whiteAlpha.600">
                   Chain ID
                 </Text>
-                <Text fontSize="2xs" color="inherit">
-                  { config.chain.id }
-                </Text>
-                <CopyToClipboard
-                  text={ String(config.chain.id) }
-                  boxSize={ 3.5 }
-                  ml={ 0.5 }
-                />
-              </Flex>
+                <Flex
+                  alignItems="center"
+                  minW={ 0 }
+                  className="address-entity"
+                  borderRadius="md"
+                  cursor="pointer"
+                  position="relative"
+                  color="white"
+                  _hover={ copyableHoverStyle }
+                >
+                  <Text fontSize="xs" color="inherit">
+                    { config.chain.id }
+                  </Text>
+                  <CopyToClipboard
+                    text={ String(config.chain.id) }
+                    boxSize={ 5 }
+                    ml={ 1 }
+                    flexShrink={ 0 }
+                  />
+                </Flex>
+              </Box>
             ) }
           </Flex>
         ) }

@@ -221,6 +221,7 @@
     "rollup": "4.59.0",
     "vite": "6.4.3",
     "vitest": "4.1.0",
+    "@libp2p/crypto": "5.1.23",
     "@libp2p/kad-dht": "16.4.5",
     "@libp2p/peer-store": "12.0.28",
     "@multiformats/multiaddr-matcher": "3.0.2",
